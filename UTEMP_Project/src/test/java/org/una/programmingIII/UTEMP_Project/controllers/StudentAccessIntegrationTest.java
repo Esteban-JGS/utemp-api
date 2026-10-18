@@ -1,0 +1,78 @@
+package org.una.programmingIII.UTEMP_Project.controllers;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.una.programmingIII.UTEMP_Project.TestcontainersConfiguration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
+
+/**
+ * A student can only read and change their own submissions, grades and notifications,
+ * and can only hand in work for courses they are enrolled in.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Import(TestcontainersConfiguration.class)
+class StudentAccessIntegrationTest {
+
+    private static final String ENROLLED_STUDENT = "300000091";
+    private static final String NOT_ENROLLED_STUDENT = "300000092";
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private TestData data;
+    private Long studentOneId;
+    private Long studentTwoId;
+    private Long studentOneSubmissionId;
+    private Long assignmentId;
+
+    @BeforeEach
+    void setUp() {
+        data = new TestData(mockMvc, jdbcTemplate);
+        studentOneId = data.userId(TestData.STUDENT_ONE);
+        studentTwoId = data.userId(TestData.STUDENT_TWO);
+        assignmentId = data.assignmentOf(data.courseId(TestData.DEMO_COURSE));
+        studentOneSubmissionId = data.submission(assignmentId, studentOneId);
+    }
+
+    @Test
+    void studentCannotReadOrMarkAnotherStudentsNotification() throws Exception {
+        Long notificationId = jdbcTemplate.queryForObject("""
+                INSERT INTO notifications (user_id, message, status, created_at, last_update)
+                VALUES (?, 'Only for student one', 'UNREAD', NOW(), NOW()) RETURNING id
+                """, Long.class, studentOneId);
+        String otherStudent = data.login(TestData.STUDENT_TWO);
+
+        mockMvc.perform(get("/utemp/notifications/{id}", notificationId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(otherStudent)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/utemp/notifications/markAsRead/{id}", notificationId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(otherStudent)))
+                .andExpect(status().isForbidden());
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM notifications WHERE id = ?", String.class, notificationId))
+                .isEqualTo("UNREAD");
+
+        mockMvc.perform(get("/utemp/notifications/{id}", notificationId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_ONE))))
+                .andExpect(status().isOk());
+    }
+}

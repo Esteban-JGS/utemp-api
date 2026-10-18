@@ -10,4 +10,7 @@ import org.una.programmingIII.UTEMP_Project.models.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     @Query("SELECT n FROM Notification n WHERE n.user.id = :userId")
     Page<Notification> findByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("select count(n) > 0 from Notification n where n.id = :notificationId and n.user.id = :userId")
+    boolean isOwner(@Param("notificationId") Long notificationId, @Param("userId") Long userId);
 }
