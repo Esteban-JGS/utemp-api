@@ -57,8 +57,9 @@ public class FileMetadatum implements Identifiable {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.lastUpdate = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.lastUpdate = now;
     }
 
     @PreUpdate
