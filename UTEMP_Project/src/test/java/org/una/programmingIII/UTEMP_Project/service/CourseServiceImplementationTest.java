@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +15,11 @@ import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.CourseState;
+import org.una.programmingIII.UTEMP_Project.models.Department;
+import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
+import org.una.programmingIII.UTEMP_Project.repositories.DepartmentRepository;
+import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 import org.una.programmingIII.UTEMP_Project.services.course.CourseServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
@@ -29,16 +35,31 @@ public class CourseServiceImplementationTest {
     @Mock
     private CourseRepository courseRepository;
     @Mock
+    private UserRepository userRepository;
+    @Mock
+    private DepartmentRepository departmentRepository;
+    @Mock
     private GenericMapper<Course, CourseDTO> courseMapper;
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private CourseServiceImplementation courseService;
 
     private Course course;
     private CourseDTO courseDTO;
+    private User teacher;
+    private Department department;
 
     @BeforeEach
     public void setUp() {
+        teacher = new User();
+        teacher.setId(2L);
+
+        department = new Department();
+        department.setId(3L);
+
         course = new Course();
         course.setId(1L);
         course.setName("Test Course");
@@ -48,6 +69,8 @@ public class CourseServiceImplementationTest {
         courseDTO.setId(1L);
         courseDTO.setName("Test Course");
         courseDTO.setState(CourseState.ACTIVE);
+        courseDTO.getTeacher().setId(2L);
+        courseDTO.getDepartment().setId(3L);
     }
 
     @Test
@@ -87,6 +110,8 @@ public class CourseServiceImplementationTest {
     @Test
     public void testCreateCourse_Success() {
         when(courseMapper.convertToEntity(courseDTO)).thenReturn(course);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(teacher));
+        when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
         when(courseRepository.save(any(Course.class))).thenReturn(course);
         when(courseMapper.convertToDTO(any(Course.class))).thenReturn(courseDTO);
 
@@ -94,11 +119,15 @@ public class CourseServiceImplementationTest {
 
         assertNotNull(result);
         assertEquals("Test Course", result.getName());
+        assertSame(teacher, course.getTeacher());
+        assertSame(department, course.getDepartment());
     }
 
     @Test
     public void testCreateCourse_InvalidData() {
         when(courseMapper.convertToEntity(courseDTO)).thenReturn(course);
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(teacher));
+        when(departmentRepository.findById(3L)).thenReturn(Optional.of(department));
         when(courseRepository.save(any(Course.class))).thenThrow(new InvalidDataException("Invalid course data"));
 
         assertThrows(InvalidDataException.class, () -> courseService.createCourse(courseDTO));
@@ -107,12 +136,14 @@ public class CourseServiceImplementationTest {
     @Test
     public void testUpdateCourse_Success() {
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(courseRepository.save(course)).thenReturn(course);
         when(courseMapper.convertToDTO(any(Course.class))).thenReturn(courseDTO);
 
         Optional<CourseDTO> result = courseService.updateCourse(1L, courseDTO);
 
         assertTrue(result.isPresent());
         assertEquals("Test Course", result.get().getName());
+        verify(courseRepository, times(1)).save(course);
     }
 
     @Test

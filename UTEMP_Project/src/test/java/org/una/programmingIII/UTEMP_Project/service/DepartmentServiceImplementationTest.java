@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -9,6 +11,7 @@ import org.una.programmingIII.UTEMP_Project.dtos.DepartmentDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.Department;
+import org.una.programmingIII.UTEMP_Project.models.Faculty;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.DepartmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.FacultyRepository;
@@ -37,6 +40,9 @@ public class DepartmentServiceImplementationTest {
 
     @Mock
     private GenericMapper<Course, CourseDTO> courseMapper;
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private DepartmentServiceImplementation departmentService;
@@ -71,8 +77,11 @@ public class DepartmentServiceImplementationTest {
         department.setId(1L);
         department.setName("Computer Science");
 
+        DepartmentDTO departmentDTO = new DepartmentDTO();
+        departmentDTO.setId(1L);
+
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
-        when(departmentMapper.convertToDTO(department)).thenReturn(new DepartmentDTO());
+        when(departmentMapper.convertToDTO(department)).thenReturn(departmentDTO);
 
         Optional<DepartmentDTO> result = departmentService.getDepartmentById(1L);
 
@@ -87,19 +96,24 @@ public class DepartmentServiceImplementationTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> departmentService.getDepartmentById(1L));
 
-        assertEquals("Department not found", exception.getMessage());
+        assertEquals("Department not found with id: 1", exception.getMessage());
     }
 
     @Test
     void testCreateDepartment() {
         DepartmentDTO departmentDTO = new DepartmentDTO();
         departmentDTO.setName("Computer Science");
+        departmentDTO.getFaculty().setId(1L);
 
         Department department = new Department();
         department.setId(1L);
         department.setName("Computer Science");
 
+        Faculty faculty = new Faculty();
+        faculty.setId(1L);
+
         when(departmentMapper.convertToEntity(departmentDTO)).thenReturn(department);
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
         when(departmentRepository.save(department)).thenReturn(department);
         when(departmentMapper.convertToDTO(department)).thenReturn(departmentDTO);
 
@@ -107,6 +121,7 @@ public class DepartmentServiceImplementationTest {
 
         assertNotNull(result);
         assertEquals("Computer Science", result.getName());
+        assertSame(faculty, department.getFaculty());
         verify(departmentRepository, times(1)).save(department);
     }
 
@@ -114,25 +129,28 @@ public class DepartmentServiceImplementationTest {
     void testCreateDepartmentInvalidData() {
         DepartmentDTO departmentDTO = new DepartmentDTO();
         departmentDTO.setName("Computer Science");
+        departmentDTO.getFaculty().setId(1L);
 
         when(departmentMapper.convertToEntity(departmentDTO)).thenReturn(new Department());
         when(facultyRepository.findById(1L)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> departmentService.createDepartment(departmentDTO));
 
-        assertEquals("Faculty not found", exception.getMessage());
+        assertEquals("Faculty not found with id: 1", exception.getMessage());
     }
 
     @Test
     void testUpdateDepartment() {
         DepartmentDTO departmentDTO = new DepartmentDTO();
         departmentDTO.setName("Updated Department");
+        departmentDTO.getFaculty().setId(1L);
 
         Department existingDepartment = new Department();
         existingDepartment.setId(1L);
         existingDepartment.setName("Old Department");
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(existingDepartment));
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(new Faculty()));
         when(departmentRepository.save(existingDepartment)).thenReturn(existingDepartment);
         when(departmentMapper.convertToDTO(existingDepartment)).thenReturn(departmentDTO);
 
@@ -140,6 +158,7 @@ public class DepartmentServiceImplementationTest {
 
         assertTrue(result.isPresent());
         assertEquals("Updated Department", result.get().getName());
+        assertEquals("Updated Department", existingDepartment.getName());
         verify(departmentRepository, times(1)).save(existingDepartment);
     }
 
@@ -162,7 +181,7 @@ public class DepartmentServiceImplementationTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> departmentService.deleteDepartment(1L));
 
-        assertEquals("Department not found", exception.getMessage());
+        assertEquals("Department not found with id: 1", exception.getMessage());
     }
 
     @Test
@@ -187,12 +206,14 @@ public class DepartmentServiceImplementationTest {
         department.setId(1L);
         Course course = new Course();
         course.setId(1L);
+        department.getCourses().add(course);
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
 
         departmentService.removeCourseFromDepartment(1L, 1L);
 
+        assertFalse(department.getCourses().contains(course));
         verify(courseRepository, times(1)).delete(course);
     }
 
@@ -202,6 +223,6 @@ public class DepartmentServiceImplementationTest {
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> departmentService.removeCourseFromDepartment(1L, 1L));
 
-        assertEquals("Department not found", exception.getMessage());
+        assertEquals("Department not found with id: 1", exception.getMessage());
     }
 }

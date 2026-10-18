@@ -42,7 +42,8 @@ class CustomUserDetailsServiceTest {
         UserDetails userDetails = customUserDetailsService.loadUserByUsername("12345");
 
         assertNotNull(userDetails);
-        assertEquals("testUser", userDetails.getUsername());
+        // Users log in with their identification number, so it is the Spring Security username
+        assertEquals("12345", userDetails.getUsername());
         verify(userRepository, times(1)).findByIdentificationNumber("12345");
     }
 

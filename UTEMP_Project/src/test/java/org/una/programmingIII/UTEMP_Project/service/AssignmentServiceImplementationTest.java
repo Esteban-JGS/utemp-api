@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -12,11 +14,13 @@ import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException
 import org.una.programmingIII.UTEMP_Project.models.Assignment;
 import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.Submission;
+import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.services.assignment.AssignmentServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.services.autoReview.AutoReviewService;
+import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
 import java.time.LocalDateTime;
@@ -27,6 +31,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AssignmentServiceImplementationTest {
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private AssignmentServiceImplementation assignmentService;
@@ -42,6 +49,9 @@ class AssignmentServiceImplementationTest {
 
     @Mock
     private AutoReviewService autoReviewService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @Mock
     private GenericMapper<Assignment, AssignmentDTO> assignmentMapper;
@@ -64,6 +74,7 @@ class AssignmentServiceImplementationTest {
         assignmentDTO = new AssignmentDTO();
         assignmentDTO.setId(1L);
         assignmentDTO.setTitle("Test Assignment DTO");
+        assignmentDTO.getCourse().setId(10L);
 
         when(assignmentMapper.convertToDTO(any(Assignment.class))).thenReturn(assignmentDTO);
         when(assignmentMapper.convertToEntity(any(AssignmentDTO.class))).thenReturn(assignment);
@@ -102,13 +113,16 @@ class AssignmentServiceImplementationTest {
 
     @Test
     void createAssignment_shouldSaveAndReturnAssignmentDTO() {
-        when(courseRepository.findById(anyLong())).thenReturn(Optional.of(new Course()));
+        Course course = new Course();
+        course.setId(10L);
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(assignmentRepository.save(any(Assignment.class))).thenReturn(assignment);
 
         AssignmentDTO result = assignmentService.createAssignment(assignmentDTO);
 
         assertNotNull(result);
         assertEquals("Test Assignment DTO", result.getTitle());
+        assertSame(course, assignment.getCourse());
         verify(assignmentRepository, times(1)).save(any(Assignment.class));
     }
 
@@ -138,12 +152,23 @@ class AssignmentServiceImplementationTest {
 
     @Test
     void addSubmissionToAssignment_shouldAddSubmissionAndReturnDTO() {
+        User teacher = new User();
+        teacher.setId(5L);
+        teacher.setEmail("teacher@example.com");
+        Course course = new Course();
+        course.setTeacher(teacher);
+        assignment.setCourse(course);
+
+        User student = new User();
+        student.setName("Student");
         Submission submission = new Submission();
         submission.setId(1L);
+        submission.setStudent(student);
         SubmissionDTO submissionDTO = new SubmissionDTO();
         submissionDTO.setId(1L);
 
         when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+        when(submissionMapper.convertToEntity(submissionDTO)).thenReturn(submission);
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
         when(submissionMapper.convertToDTO(any(Submission.class))).thenReturn(submissionDTO);
 
@@ -153,5 +178,8 @@ class AssignmentServiceImplementationTest {
         assertEquals(1L, result.getId());
         verify(submissionRepository, times(1)).save(any(Submission.class));
         verify(autoReviewService, times(1)).autoReviewSubmission(1L);
+        assertSame(assignment, submission.getAssignment());
+        assertTrue(assignment.getSubmissions().contains(submission));
+        verify(notificationService, times(1)).sendNotificationToUser(eq(5L), anyString());
     }
 }

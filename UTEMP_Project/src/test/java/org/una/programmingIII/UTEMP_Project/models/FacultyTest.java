@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,7 +18,7 @@ class FacultyTest {
         faculty = Faculty.builder()
                 .name("Engineering Faculty")
                 .university(new University())
-                .departments(List.of(new Department(), new Department()))
+                .departments(new ArrayList<>(List.of(new Department(), new Department())))
                 .build();
     }
 
@@ -68,6 +69,8 @@ class FacultyTest {
     @Test
     void testLastUpdateOnUpdate() {
         faculty.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        faculty.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = faculty.getLastUpdate();
 
 
