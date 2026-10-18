@@ -123,4 +123,53 @@ class StudentAccessIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_ONE))))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void enrolledStudentCanHandInTheirOwnWork() throws Exception {
+        Long studentId = data.user(ENROLLED_STUDENT, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, data.courseId(TestData.DEMO_COURSE));
+
+        mockMvc.perform(post("/utemp/assignments/{id}/submissions", assignmentId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(ENROLLED_STUDENT)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submissionJson(studentId)))
+                .andExpect(status().isCreated());
+
+        assertThat(data.count("SELECT COUNT(*) FROM submissions WHERE assignment_id = ? AND student_id = ?",
+                assignmentId, studentId)).isOne();
+    }
+
+    @Test
+    void studentCannotHandInWorkAsAnotherStudent() throws Exception {
+        Long studentId = data.user(ENROLLED_STUDENT, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, data.courseId(TestData.DEMO_COURSE));
+        int before = data.count("SELECT COUNT(*) FROM submissions WHERE student_id = ?", studentOneId);
+
+        mockMvc.perform(post("/utemp/assignments/{id}/submissions", assignmentId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(ENROLLED_STUDENT)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submissionJson(studentOneId)))
+                .andExpect(status().isForbidden());
+
+        assertThat(data.count("SELECT COUNT(*) FROM submissions WHERE student_id = ?", studentOneId)).isEqualTo(before);
+    }
+
+    @Test
+    void studentCannotHandInWorkForACourseTheyAreNotEnrolledIn() throws Exception {
+        Long studentId = data.user(NOT_ENROLLED_STUDENT, "STUDENT", TestData.STUDENT_PERMISSIONS);
+
+        mockMvc.perform(post("/utemp/assignments/{id}/submissions", assignmentId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(NOT_ENROLLED_STUDENT)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(submissionJson(studentId)))
+                .andExpect(status().isForbidden());
+
+        assertThat(data.count("SELECT COUNT(*) FROM submissions WHERE student_id = ?", studentId)).isZero();
+    }
+
+    private String submissionJson(Long studentId) {
+        return """
+                {"fileName": "pending-upload", "state": "SUBMITTED", "student": {"id": %d}, "assignment": {"id": %d}}
+                """.formatted(studentId, assignmentId);
+    }
 }

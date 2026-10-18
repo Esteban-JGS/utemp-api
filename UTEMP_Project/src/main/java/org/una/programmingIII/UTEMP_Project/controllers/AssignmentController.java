@@ -504,7 +504,7 @@ public class AssignmentController {
             )
     })
     @PostMapping("/{assignmentId}/submissions")
-    @PreAuthorize("hasAuthority('ADD_ASSIGNMENT_SUBMISSION')")
+    @PreAuthorize("hasAuthority('ADD_ASSIGNMENT_SUBMISSION') and @access.canSubmit(#assignmentId, #submissionDTO.student?.id, principal)")
     public ResponseEntity<SubmissionDTO> addSubmissionToAssignment(
             @Parameter(
                     description = "Unique identifier of the assignment to which the submission will be added",

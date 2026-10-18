@@ -19,4 +19,11 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     @Query("SELECT e FROM Enrollment e WHERE e.student.id = :studentId")
     Page<Enrollment> findByStudentId(@Param("studentId") Long studentId, Pageable pageable);
+
+    @Query("""
+            select count(e) > 0 from Enrollment e, Assignment a
+            where a.id = :assignmentId and e.course = a.course and e.student.id = :studentId
+            and e.state = org.una.programmingIII.UTEMP_Project.models.EnrollmentState.ENROLLED
+            """)
+    boolean isEnrolledInCourseOfAssignment(@Param("assignmentId") Long assignmentId, @Param("studentId") Long studentId);
 }
