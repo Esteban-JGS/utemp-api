@@ -56,7 +56,7 @@ class JwtTokenProviderTest {
     @Test
     void testWeakSecretIsRejectedAtStartup() {
         assertThrows(WeakKeyException.class,
-                () -> new JwtTokenProvider(userRepository, "mySuperSecretKey12345", ACCESS_TOKEN_VALIDITY, REFRESH_TOKEN_VALIDITY));
+                () -> new JwtTokenProvider(userRepository, "too-short-secret", ACCESS_TOKEN_VALIDITY, REFRESH_TOKEN_VALIDITY));
     }
 
     @Test
