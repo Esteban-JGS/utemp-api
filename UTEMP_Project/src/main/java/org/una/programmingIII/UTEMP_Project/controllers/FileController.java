@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -12,14 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.file.FileService;
 import org.una.programmingIII.UTEMP_Project.services.file.FileService.StoredFile;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 /**
  * Upload (in chunks) and download of submission files.
@@ -69,8 +69,8 @@ public class FileController {
 
     @Operation(summary = "Download a file")
     @GetMapping("/download/{id}")
-    public ResponseEntity<StreamingResponseBody> downloadFile(@PathVariable Long id,
-                                                              @AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long id,
+                                                 @AuthenticationPrincipal CustomUserDetails principal) {
         StoredFile file = fileService.getFileForDownload(id, principal.getUser());
         logger.info("Descargando archivo con ID {} ({} bytes)", id, file.size());
 
@@ -79,10 +79,11 @@ public class FileController {
                 .filename(file.fileName(), StandardCharsets.UTF_8)
                 .build();
 
+        // Written on the request thread: streaming from a second thread raced with the security header writer
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                 .contentLength(file.size())
-                .body(outputStream -> Files.copy(file.path(), outputStream));
+                .body(new FileSystemResource(file.path()));
     }
 }

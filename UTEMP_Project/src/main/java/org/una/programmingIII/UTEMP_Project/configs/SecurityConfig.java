@@ -47,8 +47,8 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                // The original request was already authorized; re-dispatches (file streaming, error pages) are not checked again
-                                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+                                // The original request was already authorized; error page re-dispatches are not checked again
+                                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                                 .requestMatchers("/utemp/auth/login", "/utemp/auth/refresh").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                                 .requestMatchers("/actuator/health").permitAll()
