@@ -201,7 +201,7 @@ public class EnrollmentController {
             )
     })
     @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS')")
+    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS') and (#studentId == principal.user.id or hasAuthority('MANAGE_ENROLLMENTS'))")
     public ResponseEntity<PageDTO<EnrollmentDTO>> getEnrollmentsByStudentId(
             @Parameter(description = "ID of the student to retrieve enrollments for") @PathVariable Long studentId,
             Pageable pageable) {

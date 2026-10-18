@@ -642,7 +642,7 @@ public class UserController {
             )
     })
     @GetMapping("/{userId}/enrollments")
-    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS')")
+    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS') and (#userId == principal.user.id or hasAuthority('MANAGE_ENROLLMENTS'))")
     public ResponseEntity<PageDTO<EnrollmentDTO>> retrieveEnrollmentsForUser(
             @PathVariable Long userId,
             Pageable pageable) {
