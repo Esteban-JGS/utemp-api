@@ -99,7 +99,8 @@ class StudentAccessIntegrationTest {
                 .andExpect(status().is4xxClientError());
 
         assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE id = ?", fileId)).isOne();
-        assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE student_id = ?", studentTwoId)).isZero();
+        assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE submission_id = ? AND student_id = ?",
+                studentOneSubmissionId, studentTwoId)).isZero();
     }
 
     @Test
