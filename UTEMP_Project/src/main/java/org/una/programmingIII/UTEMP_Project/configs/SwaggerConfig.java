@@ -31,7 +31,7 @@ public class SwaggerConfig {
 
     private static final String CONTACT_NAME = "UTEMP team";
     private static final String CONTACT_EMAIL = "utempjen@gmail.com";
-    private static final String CONTACT_URL = "https://github.com/Esteban-JGS/UTEMP_API_Projecto_Programming_III";
+    private static final String CONTACT_URL = "https://github.com/Esteban-JGS/utemp-api";
 
     private static final String SECURITY_SCHEME_NAME = "bearerAuth";
     private static final String SECURITY_SCHEME_TYPE = "HTTP";
