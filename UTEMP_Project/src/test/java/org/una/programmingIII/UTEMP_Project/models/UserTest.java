@@ -76,6 +76,7 @@ class UserTest {
 
     @Test
     void testTimestampsOnCreate() {
+        user.onCreate();
         assertNotNull(user.getCreatedAt());
         assertNotNull(user.getLastUpdate());
         assertEquals(user.getCreatedAt(), user.getLastUpdate());
