@@ -1,6 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.file;
 
-import net.loomchild.segment.util.ResourceNotFoundException;
+import org.una.programmingIII.UTEMP_Project.exceptions.FileNotFoundDataBaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import org.una.programmingIII.UTEMP_Project.repositories.FileMetadatumRepository
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -50,7 +50,7 @@ public class FileServiceImplementation implements FileService {
         User user = userRepository.findById(fileDTO.getStudent().getId())
                 .orElseThrow(() -> new UserNotFoundException("Usuario con ID " + fileDTO.getStudent().getId() + " no encontrado"));
         Submission submission = submissionRepository.findById(fileDTO.getSubmission().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Submission con ID " + fileDTO.getSubmission().getId() + " no encontrado"));
+                .orElseThrow(() -> new FileNotFoundDataBaseException("Submission con ID " + fileDTO.getSubmission().getId() + " no encontrado"));
 
         FileMetadatum newFile = generateMetadata(fileDTO, submission, user);
         logger.info("Metadatos del archivo creados para archivo: {}", newFile.getFileName());
@@ -65,11 +65,11 @@ public class FileServiceImplementation implements FileService {
 
         // Verificar la existencia de la submission
         Submission submission = submissionRepository.findById(fileDTO.getSubmission().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Submission con ID " + fileDTO.getSubmission().getId() + " no encontrado"));
+                .orElseThrow(() -> new FileNotFoundDataBaseException("Submission con ID " + fileDTO.getSubmission().getId() + " no encontrado"));
 
         // Buscar el FileMetadatum existente en la base de datos
         FileMetadatum existingFile = fileMetadatumRepository.findById(fileDTO.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Archivo con ID " + fileDTO.getId() + " no encontrado"));
+                .orElseThrow(() -> new FileNotFoundDataBaseException("Archivo con ID " + fileDTO.getId() + " no encontrado"));
 
         // Actualizar los campos del archivo con los nuevos datos
         existingFile.setFileName(fileDTO.getFileName());
@@ -105,7 +105,7 @@ public class FileServiceImplementation implements FileService {
     @Transactional
     public boolean deleteFile(Long id) {
         FileMetadatum fileMetadatum = fileMetadatumRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Archivo con ID " + id + " no encontrado para eliminar."));
+                .orElseThrow(() -> new FileNotFoundDataBaseException("Archivo con ID " + id + " no encontrado para eliminar."));
         File file = new File(fileMetadatum.getStoragePath());
 
         if (file.exists()) {
@@ -214,7 +214,7 @@ public class FileServiceImplementation implements FileService {
 
 // private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
 //        return findEntityById(id, repository)
-//                .orElseThrow(() -> new ResourceNotFoundException(entityName, id));
+//                .orElseThrow(() -> new FileNotFoundDataBaseException(entityName, id));
 //    }
 //
 //    private <T> Optional<T> findEntityById(Long id, JpaRepository<T, Long> repository) {
