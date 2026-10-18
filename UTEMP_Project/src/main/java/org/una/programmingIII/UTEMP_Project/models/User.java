@@ -7,8 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -45,6 +49,7 @@ public class User implements Identifiable {
     @NotNull(message = "Password must not be null")
     @Size(min = 8, max = 128, message = "Password must be between 8 and 128 characters long")
     @Column(name = "password", nullable = false, length = 128)
+    @ToString.Exclude
     private String password;
 
     @Size(max = 50, message = "Identification number must be at most 50 characters long")
@@ -53,18 +58,22 @@ public class User implements Identifiable {
 
     @OneToMany(mappedBy = "teacher")
     @Builder.Default
+    @ToString.Exclude
     private List<Course> coursesTeaching = new ArrayList<>();
 
     @OneToMany(mappedBy = "user")
     @Builder.Default
+    @ToString.Exclude
     private List<Notification> notifications = new ArrayList<>();
 
     @OneToMany(mappedBy = "student")
     @Builder.Default
+    @ToString.Exclude
     private List<Enrollment> userEnrollments = new ArrayList<>();
 
     @OneToMany(mappedBy = "student")
     @Builder.Default
+    @ToString.Exclude
     private List<Submission> submissions = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -119,5 +128,18 @@ public class User implements Identifiable {
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Constant per entity type, so the hash does not change when the id is assigned on persist
+        return User.class.hashCode();
     }
 }
