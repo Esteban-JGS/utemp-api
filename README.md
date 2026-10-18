@@ -6,8 +6,9 @@
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
 
 REST API for managing university coursework: universities, faculties, departments, courses, enrollments,
-assignments, submissions and grades. Students upload their work in chunks, teachers review and grade it, and
-email notifications are sent asynchronously on key events.
+assignments, submissions and grades. Students upload their work in chunks, a simulated AI
+reviewer stores a preliminary grade in the background, teachers confirm or change it, and notifications are sent
+asynchronously on key events.
 
 Built with Java 21 and Spring Boot 3.3: JWT authentication with refresh tokens, permission-based access control,
 PostgreSQL with Flyway migrations, Docker Compose, and tests with JUnit 5, Mockito and Testcontainers.
@@ -75,6 +76,7 @@ flowchart LR
     services --> repositories[Spring Data JPA repositories]
     repositories --> db[(PostgreSQL<br/>schema by Flyway)]
     services --> storage[(File storage<br/>UUID file names)]
+    services -.->|event after commit, @Async| review[Simulated AI review]
     services -.->|Observer pattern| mail[Email notifications]
     controllers -.->|exceptions| advice[GlobalExceptionHandler<br/>@RestControllerAdvice]
 ```
@@ -130,13 +132,13 @@ Errors always have the same shape, produced by a single `@RestControllerAdvice`:
 - **Schema under version control.** Flyway owns the schema and Hibernate only validates it (`ddl-auto=validate`).
   Demo data lives in a separate migration location that is only enabled by Docker Compose.
 
-## Known limitations
+## How the simulated AI review works
 
-- **Simulated AI review.** `AutoReviewService` computes a random preliminary grade, but the result is not persisted
-  yet, and the review is triggered when the submission is created, before its file is uploaded. It should run when
-  the upload finishes and save the grade.
-- **Entity equality.** JPA entities use Lombok `@Data` on bidirectional relationships; `equals`/`hashCode` should be
-  based on the identifier only.
+When the last chunk of a submission file arrives, `FileService` publishes a `SubmissionFileUploadedEvent`.
+`AutoReviewService` handles it with `@TransactionalEventListener(AFTER_COMMIT)` on the async executor, so the upload
+response is not delayed and the review always sees the stored file. It saves a preliminary grade and comment
+(`PENDING_REVIEW`, `reviewedByAi = true`) and notifies the student; the teacher confirms or changes it through the
+manual review. The grade is random but stable per file, which is enough to demo the asynchronous flow.
 
 ## Tech stack
 

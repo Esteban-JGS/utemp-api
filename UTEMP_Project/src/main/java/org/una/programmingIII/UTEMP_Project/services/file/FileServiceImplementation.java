@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.una.programmingIII.UTEMP_Project.models.UserRole;
 import org.una.programmingIII.UTEMP_Project.repositories.FileMetadatumRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
+import org.una.programmingIII.UTEMP_Project.services.autoReview.SubmissionFileUploadedEvent;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -36,15 +38,18 @@ public class FileServiceImplementation implements FileService {
     private final FileMetadatumRepository fileMetadatumRepository;
     private final UserRepository userRepository;
     private final SubmissionRepository submissionRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final Path basePath;
 
     public FileServiceImplementation(FileMetadatumRepository fileMetadatumRepository,
                                      SubmissionRepository submissionRepository,
                                      UserRepository userRepository,
+                                     ApplicationEventPublisher eventPublisher,
                                      @Value("${file.storage.base-path}") String basePath) {
         this.fileMetadatumRepository = fileMetadatumRepository;
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
+        this.eventPublisher = eventPublisher;
         this.basePath = Paths.get(basePath).toAbsolutePath().normalize();
     }
 
@@ -155,11 +160,13 @@ public class FileServiceImplementation implements FileService {
 
     private void finalizeUpload(FileMetadatum metadata) {
         Submission submission = metadata.getSubmission();
+        fileMetadatumRepository.save(metadata);
         if (submission != null) {
             submission.setFileName(metadata.getFileName());
             submissionRepository.save(submission);
+            // The automatic review listens to this event and runs after this transaction commits
+            eventPublisher.publishEvent(new SubmissionFileUploadedEvent(submission.getId()));
         }
-        fileMetadatumRepository.save(metadata);
         logger.info("Carga del archivo {} finalizada", metadata.getId());
     }
 
