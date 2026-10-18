@@ -25,7 +25,6 @@ import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.services.EmailNotificationObserver;
-import org.una.programmingIII.UTEMP_Project.services.autoReview.AutoReviewService;
 import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
@@ -44,7 +43,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
     private final CourseRepository courseRepository;
     private final SubmissionRepository submissionRepository;
     private final NotificationService notificationService;
-    private final AutoReviewService autoReviewService;
 
     private final GenericMapper<Assignment, AssignmentDTO> assignmentMapper;
     private final GenericMapper<Submission, SubmissionDTO> submissionMapper;
@@ -55,14 +53,12 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             CourseRepository courseRepository,
             SubmissionRepository submissionRepository,
             NotificationService notificationService,
-            AutoReviewService autoReviewService,
             GenericMapperFactory mapperFactory) {
 
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.submissionRepository = submissionRepository;
         this.notificationService = notificationService;
-        this.autoReviewService = autoReviewService;
         this.assignmentMapper = mapperFactory.createMapper(Assignment.class, AssignmentDTO.class);
         this.submissionMapper = mapperFactory.createMapper(Submission.class, SubmissionDTO.class);
     }
@@ -214,9 +210,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             try {
                 Submission savedSubmission = submissionRepository.save(submission);
                 assignment.getSubmissions().add(savedSubmission);
-
-                autoReviewService.autoReviewSubmission(savedSubmission.getId());
-
                 sendNotificationForSubmission(assignment, submission);
                 logger.info("Submission added successfully for assignment ID: {}", assignmentId);
                 return submissionMapper.convertToDTO(savedSubmission);

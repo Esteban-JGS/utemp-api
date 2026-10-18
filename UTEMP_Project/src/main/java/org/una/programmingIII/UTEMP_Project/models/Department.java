@@ -4,14 +4,18 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -31,10 +35,12 @@ public class Department {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "faculty_id", nullable = false)
     @Builder.Default
+    @ToString.Exclude
     private Faculty faculty = new Faculty();
 
     @OneToMany(mappedBy = "department")
     @Builder.Default
+    @ToString.Exclude
     private List<Course> courses = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
@@ -53,5 +59,18 @@ public class Department {
     @PreUpdate
     protected void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Department other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Constant per entity type, so the hash does not change when the id is assigned on persist
+        return Department.class.hashCode();
     }
 }

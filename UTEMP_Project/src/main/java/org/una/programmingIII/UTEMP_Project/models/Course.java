@@ -4,15 +4,19 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -36,20 +40,24 @@ public class Course implements Identifiable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "teacher_id", nullable = false)
     @Builder.Default
+    @ToString.Exclude
     private User teacher = new User();
 
     @NotNull(message = "Department must not be null")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id", nullable = false)
     @Builder.Default
+    @ToString.Exclude
     private Department department = new Department();
 
     @OneToMany(mappedBy = "course")
     @Builder.Default
+    @ToString.Exclude
     private List<Assignment> assignments = new ArrayList<>();
 
     @OneToMany(mappedBy = "course")
     @Builder.Default
+    @ToString.Exclude
     private List<Enrollment> enrollments = new ArrayList<>();
 
     @NotNull(message = "State must not be null")
@@ -80,5 +88,18 @@ public class Course implements Identifiable {
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Course other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Constant per entity type, so the hash does not change when the id is assigned on persist
+        return Course.class.hashCode();
     }
 }
