@@ -66,7 +66,7 @@ class FileServiceImplementationTest {
     @Test
     void createStoresTheFileUnderAGeneratedNameAndKeepsOnlyTheBaseName() {
         when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
-        when(submissionRepository.findById(5L)).thenReturn(Optional.of(new Submission()));
+        when(submissionRepository.findById(5L)).thenReturn(Optional.of(submissionOf(owner)));
         when(fileMetadatumRepository.save(any(FileMetadatum.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         fileService.createNewFileMetadata(uploadRequest(owner.getId(), "../../etc/passwd"), owner);
@@ -82,6 +82,16 @@ class FileServiceImplementationTest {
     void studentCannotCreateAFileOnBehalfOfAnotherStudent() {
         assertThrows(AccessDeniedException.class,
                 () -> fileService.createNewFileMetadata(uploadRequest(owner.getId(), "notes.txt"), otherStudent));
+        verify(fileMetadatumRepository, never()).save(any());
+    }
+
+    @Test
+    void studentCannotCreateAFileInAnotherStudentsSubmission() {
+        when(userRepository.findById(otherStudent.getId())).thenReturn(Optional.of(otherStudent));
+        when(submissionRepository.findById(5L)).thenReturn(Optional.of(submissionOf(owner)));
+
+        assertThrows(AccessDeniedException.class,
+                () -> fileService.createNewFileMetadata(uploadRequest(otherStudent.getId(), "notes.txt"), otherStudent));
         verify(fileMetadatumRepository, never()).save(any());
     }
 
@@ -171,6 +181,13 @@ class FileServiceImplementationTest {
         user.setId(id);
         user.setRole(role);
         return user;
+    }
+
+    private static Submission submissionOf(User student) {
+        Submission submission = new Submission();
+        submission.setId(5L);
+        submission.setStudent(student);
+        return submission;
     }
 
     private FileMetadatum storedFile(String content) {

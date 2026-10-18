@@ -66,6 +66,20 @@ class StudentAccessIntegrationTest {
     }
 
     @Test
+    void studentCannotUploadAFileToAnotherStudentsSubmission() throws Exception {
+        mockMvc.perform(post("/utemp/files")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_TWO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fileName": "evil.txt", "fileSize": 5, "student": {"id": %d}, "submission": {"id": %d}}
+                                """.formatted(studentTwoId, studentOneSubmissionId)))
+                .andExpect(status().isForbidden());
+
+        assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE submission_id = ? AND student_id = ?",
+                studentOneSubmissionId, studentTwoId)).isZero();
+    }
+
+    @Test
     void studentCannotReadOrMarkAnotherStudentsNotification() throws Exception {
         Long notificationId = jdbcTemplate.queryForObject("""
                 INSERT INTO notifications (user_id, message, status, created_at, last_update)
