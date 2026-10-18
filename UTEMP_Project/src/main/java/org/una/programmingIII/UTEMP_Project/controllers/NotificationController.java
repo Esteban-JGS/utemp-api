@@ -18,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.NotificationDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -63,15 +61,10 @@ public class NotificationController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<NotificationDTO>> getAllNotifications(Pageable pageable) {
-        try {
-            Page<NotificationDTO> notificationsPage = notificationService.getAllNotifications(pageable);
-            PageDTO<NotificationDTO> notificationsDTOPage = PageConverter.convertPageToDTO(notificationsPage, notificationDTO -> notificationDTO);
-            logger.info("Fetched all notifications successfully.");
-            return ResponseEntity.ok(notificationsDTOPage);
-        } catch (Exception e) {
-            logger.error("Error retrieving notifications: {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Page<NotificationDTO> notificationsPage = notificationService.getAllNotifications(pageable);
+        PageDTO<NotificationDTO> notificationsDTOPage = PageConverter.convertPageToDTO(notificationsPage, notificationDTO -> notificationDTO);
+        logger.info("Fetched all notifications successfully.");
+        return ResponseEntity.ok(notificationsDTOPage);
     }
 
     @Operation(
@@ -107,17 +100,12 @@ public class NotificationController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable Long id) {
-        try {
-            Optional<NotificationDTO> notification = notificationService.getNotificationById(id);
-            return notification.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Notification not found with ID: {}", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving notification with ID {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Optional<NotificationDTO> notification = notificationService.getNotificationById(id);
+        return notification.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Notification not found with ID: {}", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -153,17 +141,9 @@ public class NotificationController {
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<NotificationDTO> createNotification(@Valid @RequestBody NotificationDTO notificationDTO) {
-        try {
-            NotificationDTO createdNotification = notificationService.createNotification(notificationDTO);
-            logger.info("Created new notification: {}", createdNotification);
-            return new ResponseEntity<>(createdNotification, HttpStatus.CREATED);
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for notification creation: {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            logger.error("Error creating notification: {}", e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        NotificationDTO createdNotification = notificationService.createNotification(notificationDTO);
+        logger.info("Created new notification: {}", createdNotification);
+        return new ResponseEntity<>(createdNotification, HttpStatus.CREATED);
     }
 
     @Operation(
@@ -208,23 +188,12 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<NotificationDTO> updateNotification(@PathVariable Long NotiId,
                                                               @Valid @RequestBody NotificationDTO notificationDTO) {
-        try {
-            Optional<NotificationDTO> updatedNotification = notificationService.updateNotification(NotiId, notificationDTO);
-            return updatedNotification.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Notification not found for update with ID: {}", NotiId);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for notification update with ID {}: {}", NotiId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Notification not found with ID: {}", NotiId, e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error updating notification with ID {}: {}", NotiId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Optional<NotificationDTO> updatedNotification = notificationService.updateNotification(NotiId, notificationDTO);
+        return updatedNotification.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Notification not found for update with ID: {}", NotiId);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -256,17 +225,9 @@ public class NotificationController {
     @DeleteMapping("/{NotiId}")
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long NotiId) {
-        try {
-            notificationService.deleteNotification(NotiId);
-            logger.info("Deleted notification with ID: {}", NotiId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Notification not found with ID: {}", NotiId, e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error deleting notification with ID {}: {}", NotiId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        notificationService.deleteNotification(NotiId);
+        logger.info("Deleted notification with ID: {}", NotiId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -294,15 +255,10 @@ public class NotificationController {
     @GetMapping("/user/{userId}")
     @PreAuthorize("#userId == principal.user.id or hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<NotificationDTO>> getNotificationsByUserId(@PathVariable Long userId, Pageable pageable) {
-        try {
-            Page<NotificationDTO> notificationsPage = notificationService.getNotificationsByUserId(userId, pageable);
-            PageDTO<NotificationDTO> notificationsDTOPage = PageConverter.convertPageToDTO(notificationsPage, notificationDTO -> notificationDTO);
-            logger.info("Fetched notifications for user ID: {}", userId);
-            return ResponseEntity.ok(notificationsDTOPage);
-        } catch (Exception e) {
-            logger.error("Error retrieving notifications for user ID {}: {}", userId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        Page<NotificationDTO> notificationsPage = notificationService.getNotificationsByUserId(userId, pageable);
+        PageDTO<NotificationDTO> notificationsDTOPage = PageConverter.convertPageToDTO(notificationsPage, notificationDTO -> notificationDTO);
+        logger.info("Fetched notifications for user ID: {}", userId);
+        return ResponseEntity.ok(notificationsDTOPage);
     }
 
     @Operation(
@@ -335,17 +291,9 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> addNotificationToUser(@PathVariable Long userId,
                                                       @Valid @RequestBody NotificationDTO notificationDTO) {
-        try {
-            notificationService.addNotificationToUser(userId, notificationDTO);
-            logger.info("Added notification to user ID: {}", userId);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for adding notification to user ID {}: {}", userId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            logger.error("Error adding notification to user ID {}: {}", userId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        notificationService.addNotificationToUser(userId, notificationDTO);
+        logger.info("Added notification to user ID: {}", userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(
@@ -378,17 +326,9 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> removeNotificationFromUser(@PathVariable Long userId,
                                                            @PathVariable Long notificationId) {
-        try {
-            notificationService.removeNotificationFromUser(userId, notificationId);
-            logger.info("Removed notification with ID: {} from user ID: {}", notificationId, userId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Notification or user not found: userId={}, notificationId={}", userId, notificationId, e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error removing notification from user ID {}: {}", userId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        notificationService.removeNotificationFromUser(userId, notificationId);
+        logger.info("Removed notification with ID: {} from user ID: {}", notificationId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -419,17 +359,9 @@ public class NotificationController {
     })
     @PostMapping("/markAsRead/{notificationId}")
     public ResponseEntity<Void> markAsRead(@PathVariable Long notificationId) {
-        try {
-            notificationService.markAsRead(notificationId);
-            logger.info("Marked notification as read with ID: {}", notificationId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Notification not found with ID: {}", notificationId, e);
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            logger.error("Error marking notification as read with ID {}: {}", notificationId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        notificationService.markAsRead(notificationId);
+        logger.info("Marked notification as read with ID: {}", notificationId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -454,13 +386,8 @@ public class NotificationController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> sendNotificationToUser(@RequestParam Long userId,
                                                        @RequestParam String message) {
-        try {
-            notificationService.sendNotificationToUser(userId, message);
-            logger.info("Sent notification to user ID: {}", userId);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (Exception e) {
-            logger.error("Error sending notification to user ID {}: {}", userId, e.getMessage(), e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        notificationService.sendNotificationToUser(userId, message);
+        logger.info("Sent notification to user ID: {}", userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

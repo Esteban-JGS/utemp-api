@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -96,6 +97,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while creating user: {}", e.getMessage());
             throw new InvalidDataException("Error creating user");
@@ -112,6 +115,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             }, "Error fetching user by ID");
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with ID {}: {}", id, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching user by ID {}: {}", id, e.getMessage());
@@ -130,6 +135,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with identification number {}: {}", identificationNumber, e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching user by identification number {}: {}", identificationNumber, e.getMessage());
             throw new InvalidDataException("Error fetching user by identification number");
@@ -146,6 +153,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             }, "Error fetching user by role");
         } catch (ResourceNotFoundException e) {
             logger.error("User not found with role {}: {}", role, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching user by role {}: {}", role, e.getMessage());
@@ -164,6 +173,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all users: {}", e.getMessage());
             throw new InvalidDataException("Error fetching users from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all users: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all users");
@@ -181,6 +192,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all users by role: {}", e.getMessage());
             throw new InvalidDataException("Error fetching users by role from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all users by role: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all users by role");
@@ -233,6 +246,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching courses for teacher ID {}: {}", teacherId, e.getMessage());
             throw new InvalidDataException("Error fetching courses from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching courses for teacher ID {}: {}", teacherId, e.getMessage());
             throw new InvalidDataException("Error fetching courses teaching by user ID");
@@ -284,6 +299,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching enrollments for student ID {}: {}", studentId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching enrollments for student ID {}: {}", studentId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments by student ID");
@@ -336,7 +353,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         Course course = getEntityById(courseId, courseRepository, "Course");
 
         Enrollment enrollment = enrollmentRepository.findByStudentAndCourse(user, course)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found", user.getId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment", user.getId()));
 
         executeWithLogging(() -> {
             enrollmentRepository.delete(enrollment);
@@ -419,6 +436,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             return action.get();
         } catch (ResourceNotFoundException e) {
             logger.warn("Resource not found: {}", e.getMessage());
+            throw e;
+        } catch (DomainException | DataAccessException e) {
             throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());

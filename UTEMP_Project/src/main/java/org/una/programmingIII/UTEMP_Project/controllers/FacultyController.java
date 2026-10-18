@@ -19,8 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.DepartmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.FacultyDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.faculty.FacultyService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -74,16 +72,11 @@ public class FacultyController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_FACULTIES')")
     public ResponseEntity<PageDTO<FacultyDTO>> getAllFaculties(Pageable pageable) {
-        try {
-            Page<FacultyDTO> facultiesPage = facultyService.getAllFaculties(pageable);
-            PageDTO<FacultyDTO> facultiesDTOPage = PageConverter.convertPageToDTO(facultiesPage, facultyDTO -> facultyDTO);
-            logger.info("Fetched all faculties successfully.");
-            return ResponseEntity.ok(facultiesDTOPage);
+        Page<FacultyDTO> facultiesPage = facultyService.getAllFaculties(pageable);
+        PageDTO<FacultyDTO> facultiesDTOPage = PageConverter.convertPageToDTO(facultiesPage, facultyDTO -> facultyDTO);
+        logger.info("Fetched all faculties successfully.");
+        return ResponseEntity.ok(facultiesDTOPage);
 
-        } catch (Exception e) {
-            logger.error("Error retrieving faculties: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     @Operation(
@@ -138,17 +131,12 @@ public class FacultyController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGE_FACULTIES')")
     public ResponseEntity<FacultyDTO> getFacultyById(@Parameter(description = "ID of the faculty to retrieve") @PathVariable Long id) {
-        try {
-            return facultyService.getFacultyById(id)
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Faculty not found with id: {}", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving faculty with id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return facultyService.getFacultyById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Faculty not found with id: {}", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -202,16 +190,8 @@ public class FacultyController {
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_FACULTIES')")
     public ResponseEntity<FacultyDTO> createFaculty(@Valid @RequestBody FacultyDTO facultyDTO) {
-        try {
-            FacultyDTO createdFaculty = facultyService.createFaculty(facultyDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdFaculty);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while creating faculty: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error creating faculty: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        FacultyDTO createdFaculty = facultyService.createFaculty(facultyDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdFaculty);
     }
 
     @Operation(
@@ -281,20 +261,12 @@ public class FacultyController {
     @PreAuthorize("hasAuthority('MANAGE_FACULTIES')")
     public ResponseEntity<FacultyDTO> updateFaculty(@PathVariable Long id,
                                                     @Valid @RequestBody FacultyDTO facultyDTO) {
-        try {
-            return facultyService.updateFaculty(id, facultyDTO)
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Faculty not found for update with id: {}", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while updating faculty: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error updating faculty with id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return facultyService.updateFaculty(id, facultyDTO)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Faculty not found for update with id: {}", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -345,16 +317,8 @@ public class FacultyController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGE_FACULTIES')")
     public ResponseEntity<Void> deleteFaculty(@PathVariable Long id) {
-        try {
-            facultyService.deleteFaculty(id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Faculty not found for deletion with id: {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error deleting faculty with id {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        facultyService.deleteFaculty(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -408,15 +372,10 @@ public class FacultyController {
     @PreAuthorize("hasAuthority('GET_UNIVERSITY_FACILITIES')")
     public ResponseEntity<PageDTO<FacultyDTO>> getFacultiesByUniversityId(@PathVariable Long universityId,
                                                                           Pageable pageable) {
-        try {
-            Page<FacultyDTO> facultiesPage = facultyService.getFacultiesByUniversityId(universityId, pageable);
-            PageDTO<FacultyDTO> facultiesDTOPage = PageConverter.convertPageToDTO(facultiesPage, facultyDTO -> facultyDTO);
-            return ResponseEntity.ok(facultiesDTOPage);
+        Page<FacultyDTO> facultiesPage = facultyService.getFacultiesByUniversityId(universityId, pageable);
+        PageDTO<FacultyDTO> facultiesDTOPage = PageConverter.convertPageToDTO(facultiesPage, facultyDTO -> facultyDTO);
+        return ResponseEntity.ok(facultiesDTOPage);
 
-        } catch (Exception e) {
-            logger.error("Error retrieving faculties for university {}: {}", universityId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
     }
 
     @Operation(
@@ -469,16 +428,8 @@ public class FacultyController {
     @PreAuthorize("hasAuthority('ADD_FACULTY_DEPARTMENTS')")
     public ResponseEntity<Void> addDepartmentToFaculty(@PathVariable Long facultyId,
                                                        @Valid @RequestBody DepartmentDTO departmentDTO) {
-        try {
-            facultyService.addDepartmentToFaculty(facultyId, departmentDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while adding department to faculty: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error adding department to faculty with id {}: {}", facultyId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        facultyService.addDepartmentToFaculty(facultyId, departmentDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(
@@ -530,15 +481,7 @@ public class FacultyController {
     @PreAuthorize("hasAuthority('REMOVE_FACULTY_DEPARTMENTS')")
     public ResponseEntity<Void> removeDepartmentFromFaculty(@PathVariable Long facultyId,
                                                             @PathVariable Long departmentId) {
-        try {
-            facultyService.removeDepartmentFromFaculty(facultyId, departmentId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Department not found for removal from faculty with id: {} and departmentId: {}", facultyId, departmentId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error removing department from faculty with id {}: {}", facultyId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        facultyService.removeDepartmentFromFaculty(facultyId, departmentId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.university;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -61,6 +62,8 @@ public class UniversityServiceImplementation implements UniversityService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all universities: {}", e.getMessage());
             throw new InvalidDataException("Error fetching universities from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all universities: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all universities");
@@ -78,6 +81,8 @@ public class UniversityServiceImplementation implements UniversityService {
         } catch (ResourceNotFoundException e) {
             logger.warn("University not found: {}", e.getMessage());
             return Optional.empty();
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error fetching university by ID {}: {}", id, e.getMessage());
             throw new ServiceException("Error fetching university", e);
@@ -94,6 +99,8 @@ public class UniversityServiceImplementation implements UniversityService {
         } catch (DataIntegrityViolationException e) {
             logger.error("Data integrity violation while creating university: {}", e.getMessage());
             throw new InvalidDataException("Error: University data is invalid or already exists.");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error creating university: {}", e.getMessage());
             throw new ServiceException("Error creating university", e);
@@ -114,6 +121,8 @@ public class UniversityServiceImplementation implements UniversityService {
         } catch (DataIntegrityViolationException e) {
             logger.error("Data integrity violation while updating university: {}", e.getMessage());
             throw new InvalidDataException("Error: University data is invalid or violates constraints.");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error updating university: {}", e.getMessage());
             throw new ServiceException("Error updating university", e);
@@ -133,6 +142,8 @@ public class UniversityServiceImplementation implements UniversityService {
             logger.error("Data integrity violation while deleting university: {}", e.getMessage());
             throw new InvalidDataException("Error: Cannot delete university due to existing references.");
         } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error deleting university: {}", e.getMessage());
@@ -157,6 +168,8 @@ public class UniversityServiceImplementation implements UniversityService {
             throw new InvalidDataException("Error: Cannot add faculty due to existing constraints.");
         } catch (ResourceNotFoundException e) {
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error adding faculty to university: {}", e.getMessage());
             throw new ServiceException("Error adding faculty to university", e);
@@ -176,7 +189,7 @@ public class UniversityServiceImplementation implements UniversityService {
                 return null;
             }, "Error removing faculty from university");
         } else {
-            throw new ResourceNotFoundException("Faculty not found in this university", universityId);
+            throw new ResourceNotFoundException("Faculty in this university", universityId);
         }
     }
 
@@ -200,6 +213,8 @@ public class UniversityServiceImplementation implements UniversityService {
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);

@@ -45,7 +45,7 @@ public class ManualReviewServiceImplementation implements ManualReviewService {
             return Optional.of(grade);
         } else {
             logger.error("Grade not found for submission ID: {}", submissionId);
-            throw new ResourceNotFoundException("No grade found for submission ID: " + submissionId, submissionId);
+            throw new ResourceNotFoundException("Grade for submission", submissionId);
         }
     }
 

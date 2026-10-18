@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.enrollment;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -66,6 +67,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all enrollments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching enrollments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all enrollments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching enrollments");
@@ -83,6 +86,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching enrollments for course ID {}: {}", courseId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments from the database for course ID: " + courseId);
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching enrollments for course ID {}: {}", courseId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments for course ID: " + courseId);
@@ -100,6 +105,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching enrollments for student ID {}: {}", studentId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments from the database for student ID: " + studentId);
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching enrollments for student ID {}: {}", studentId, e.getMessage());
             throw new InvalidDataException("Error fetching enrollments for student ID: " + studentId);
@@ -116,6 +123,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Enrollment not found: {}", e.getMessage());
             throw e; // Re-throwing to let the global exception handler handle this
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error fetching enrollment by ID {}: {}", id, e.getMessage());
             throw new ServiceException("Error fetching enrollment by ID", e);
@@ -139,6 +148,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (DataIntegrityViolationException e) {
             logger.error("Data integrity violation while creating enrollment: {}", e.getMessage());
             throw new ServiceException("Enrollment data is invalid or already exists", e);
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error creating enrollment: {}", e.getMessage());
             throw new ServiceException("Error creating enrollment", e);
@@ -158,6 +169,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to update enrollment: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error updating enrollment ID {}: {}", id, e.getMessage());
             throw new ServiceException("Error updating enrollment", e);
@@ -172,6 +185,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             enrollmentRepository.delete(enrollment);
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to delete enrollment: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error deleting enrollment ID {}: {}", id, e.getMessage());
@@ -198,6 +213,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);

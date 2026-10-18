@@ -19,8 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.assignment.AssignmentService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -128,18 +126,10 @@ public class AssignmentController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_ASSIGNMENTS')")
     public ResponseEntity<PageDTO<AssignmentDTO>> getAllAssignments(Pageable pageable) {
-        try {
-            Page<AssignmentDTO> assignments = assignmentService.getAllAssignments(pageable);
-            PageDTO<AssignmentDTO> assignmentDTOs = PageConverter.convertPageToDTO(assignments, Function.identity());
-            return ResponseEntity.ok(assignmentDTOs);
+        Page<AssignmentDTO> assignments = assignmentService.getAllAssignments(pageable);
+        PageDTO<AssignmentDTO> assignmentDTOs = PageConverter.convertPageToDTO(assignments, Function.identity());
+        return ResponseEntity.ok(assignmentDTOs);
 
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data fetching assignments: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            logger.error("Error fetching all assignments: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
     }
 
     @Operation(
@@ -204,19 +194,13 @@ public class AssignmentController {
                     required = true
             )
             @PathVariable Long id) {
-        try {
-            Optional<AssignmentDTO> assignmentDTO = assignmentService.getAssignmentById(id);
-            if (assignmentDTO.isPresent()) {
-                return ResponseEntity.ok(assignmentDTO.get());
-            } else {
-                logger.error("Assignment not found with ID {}.", id);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new AssignmentDTO(null, "Assignment not found", null, null, null, null, null, null, null)); // Aquí puedes proporcionar un cuerpo más informativo
-            }
-        } catch (Exception e) {
-            logger.error("Unexpected error retrieving assignment with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AssignmentDTO(null, "Error retrieving assignment", null, null, null, null, null, null, null)); // Cuerpo de error claro
+        Optional<AssignmentDTO> assignmentDTO = assignmentService.getAssignmentById(id);
+        if (assignmentDTO.isPresent()) {
+            return ResponseEntity.ok(assignmentDTO.get());
+        } else {
+            logger.error("Assignment not found with ID {}.", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new AssignmentDTO(null, "Assignment not found", null, null, null, null, null, null, null)); // Aquí puedes proporcionar un cuerpo más informativo
         }
     }
 
@@ -285,16 +269,8 @@ public class AssignmentController {
                     required = true
             )
             @Valid @RequestBody AssignmentDTO assignmentDTO) {
-        try {
-            AssignmentDTO createdAssignment = assignmentService.createAssignment(assignmentDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdAssignment);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for creating assignment: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error creating assignment: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        AssignmentDTO createdAssignment = assignmentService.createAssignment(assignmentDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAssignment);
     }
 
     @Operation(
@@ -354,18 +330,10 @@ public class AssignmentController {
             )
             @PathVariable Long id,
             @Valid @RequestBody AssignmentDTO assignmentDTO) {
-        try {
-            Optional<AssignmentDTO> updatedAssignment = assignmentService.updateAssignment(id, assignmentDTO);
-            return updatedAssignment
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for updating assignment ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build(); // Cambiado para mayor consistencia
-        } catch (Exception e) {
-            logger.error("Unexpected error updating assignment ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Cambiado para mayor consistencia
-        }
+        Optional<AssignmentDTO> updatedAssignment = assignmentService.updateAssignment(id, assignmentDTO);
+        return updatedAssignment
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @Operation(
@@ -402,16 +370,8 @@ public class AssignmentController {
                     example = "5"
             )
             @PathVariable Long id) {
-        try {
-            assignmentService.deleteAssignment(id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error deleting assignment with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // Cambiado a .build()
-        } catch (Exception e) {
-            logger.error("Unexpected error deleting assignment with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Cambiado a .build()
-        }
+        assignmentService.deleteAssignment(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -493,17 +453,9 @@ public class AssignmentController {
             )
             @PathVariable Long courseId,
             Pageable pageable) {
-        try {
-            Page<AssignmentDTO> assignmentsPage = assignmentService.getAssignmentsByCourseId(courseId, pageable);
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(assignmentsPage, assignmentDTO -> assignmentDTO));
+        Page<AssignmentDTO> assignmentsPage = assignmentService.getAssignmentsByCourseId(courseId, pageable);
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(assignmentsPage, assignmentDTO -> assignmentDTO));
 
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data fetching assignments for course ID {}: {}", courseId, e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            logger.error("Error fetching assignments for course ID {}: {}", courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
     }
 
     @Operation(
@@ -561,19 +513,8 @@ public class AssignmentController {
             )
             @PathVariable Long assignmentId,
             @Valid @RequestBody SubmissionDTO submissionDTO) {
-        try {
-            SubmissionDTO createdSubmission = assignmentService.addSubmissionToAssignment(assignmentId, submissionDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Assignment not found with ID {}: {}", assignmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for submission: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error adding submission to assignment ID {}: {}", assignmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        SubmissionDTO createdSubmission = assignmentService.addSubmissionToAssignment(assignmentId, submissionDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
     }
 
     @Operation(
@@ -610,15 +551,7 @@ public class AssignmentController {
     @PreAuthorize("hasAuthority('REMOVE_ASSIGNMENT_SUBMISSION')")
     public ResponseEntity<Void> removeSubmissionFromAssignment(@PathVariable Long assignmentId,
                                                                @PathVariable Long submissionId) {
-        try {
-            assignmentService.removeSubmissionFromAssignment(assignmentId, submissionId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove submission ID {} from assignment ID {}: {}", submissionId, assignmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Error removing submission ID {} from assignment ID {}: {}", submissionId, assignmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        assignmentService.removeSubmissionFromAssignment(assignmentId, submissionId);
+        return ResponseEntity.noContent().build();
     }
 }
