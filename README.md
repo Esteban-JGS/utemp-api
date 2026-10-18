@@ -70,15 +70,15 @@ GitHub Actions runs the whole suite and builds the Docker image on every push.
 
 ```mermaid
 flowchart LR
-    client[Client / Swagger UI] -->|HTTP + Bearer JWT| filter[JwtRequestFilter]
-    filter --> controllers[Controllers<br/>@PreAuthorize rules]
-    controllers --> services[Services<br/>business rules, ownership checks]
-    services --> repositories[Spring Data JPA repositories]
-    repositories --> db[(PostgreSQL<br/>schema by Flyway)]
-    services --> storage[(File storage<br/>UUID file names)]
-    services -.->|event after commit, @Async| review[Simulated AI review]
-    services -.->|Observer pattern| mail[Email notifications]
-    controllers -.->|exceptions| advice[GlobalExceptionHandler<br/>@RestControllerAdvice]
+    client["Client / Swagger UI"] -->|"HTTP + Bearer JWT"| filter["JwtRequestFilter"]
+    filter --> controllers["Controllers<br/>@PreAuthorize rules"]
+    controllers --> services["Services<br/>business rules, ownership checks"]
+    services --> repositories["Spring Data JPA repositories"]
+    repositories --> db[("PostgreSQL<br/>schema by Flyway")]
+    services --> storage[("File storage<br/>UUID file names")]
+    services -.->|"event after commit, @Async"| review["Simulated AI review"]
+    services -.->|"Observer pattern"| mail["Email notifications"]
+    controllers -.->|"exceptions"| advice["GlobalExceptionHandler<br/>@RestControllerAdvice"]
 ```
 
 ```text
