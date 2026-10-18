@@ -641,7 +641,7 @@ public class CourseController {
             )
     })
     @PostMapping("/{courseId}/assignments")
-    @PreAuthorize("hasAuthority('ADD_COURSE_ASSIGNMENTS')")
+    @PreAuthorize("hasAuthority('ADD_COURSE_ASSIGNMENTS') and @access.canManageCourse(#courseId, principal)")
     public ResponseEntity<Void> addAssignmentToCourse(@PathVariable Long courseId,
                                                       @RequestBody AssignmentDTO assignmentDTO) {
         courseService.addAssignmentToCourse(courseId, assignmentDTO);
@@ -679,7 +679,7 @@ public class CourseController {
             )
     })
     @DeleteMapping("/{courseId}/assignments/{assignmentId}")
-    @PreAuthorize("hasAuthority('REMOVE_COURSE_ASSIGNMENTS')")
+    @PreAuthorize("hasAuthority('REMOVE_COURSE_ASSIGNMENTS') and @access.canManageCourse(#courseId, principal)")
     public ResponseEntity<Void> removeAssignmentFromCourse(@PathVariable Long courseId,
                                                            @PathVariable Long assignmentId) {
         courseService.removeAssignmentFromCourse(courseId, assignmentId);

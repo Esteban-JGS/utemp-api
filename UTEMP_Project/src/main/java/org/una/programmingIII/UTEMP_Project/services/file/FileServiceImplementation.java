@@ -75,6 +75,9 @@ public class FileServiceImplementation implements FileService {
                 .orElseThrow(() -> new UserNotFoundException("Usuario con ID " + studentId + " no encontrado"));
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
+        if (!isAdmin(requester) && !isStudentOf(submission, requester)) {
+            throw new AccessDeniedException("Users can only upload files to their own submissions");
+        }
 
         FileMetadatum newFile = FileMetadatum.builder()
                 .submission(submission)
@@ -214,6 +217,10 @@ public class FileServiceImplementation implements FileService {
 
     private boolean isAdmin(User user) {
         return user.getRole() == UserRole.ADMIN;
+    }
+
+    private boolean isStudentOf(Submission submission, User user) {
+        return submission.getStudent() != null && user.getId().equals(submission.getStudent().getId());
     }
 
     private FileMetadatumDTO metadataToDto(FileMetadatum fileMetadatum) {

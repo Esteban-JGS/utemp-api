@@ -32,7 +32,8 @@ public class AssignmentDTO {
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+    // An Instant has no time zone of its own, so the pattern needs one to be formatted
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private Instant deadline;
 
     @NotNull(message = "Course must not be null")

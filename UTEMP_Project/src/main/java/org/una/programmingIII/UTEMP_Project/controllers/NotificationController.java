@@ -98,7 +98,7 @@ public class NotificationController {
             )
     })
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@access.ownsNotification(#id, principal) or hasAuthority('MANAGE_USERS')")
     public ResponseEntity<NotificationDTO> getNotificationById(@PathVariable Long id) {
         Optional<NotificationDTO> notification = notificationService.getNotificationById(id);
         return notification.map(ResponseEntity::ok)
@@ -358,6 +358,7 @@ public class NotificationController {
             )
     })
     @PostMapping("/markAsRead/{notificationId}")
+    @PreAuthorize("@access.ownsNotification(#notificationId, principal) or hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> markAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
         logger.info("Marked notification as read with ID: {}", notificationId);

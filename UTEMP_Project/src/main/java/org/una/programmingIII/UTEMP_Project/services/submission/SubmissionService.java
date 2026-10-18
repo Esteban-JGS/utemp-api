@@ -3,7 +3,6 @@ package org.una.programmingIII.UTEMP_Project.services.submission;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
@@ -23,11 +22,7 @@ public interface SubmissionService {
 
     Page<SubmissionDTO> getSubmissionsByAssignmentId(Long assignmentId, Pageable pageable);
 
-    FileMetadatumDTO addFileMetadatumToSubmission(Long submissionId, @Valid FileMetadatumDTO fileMetadatumDTO);
-
     GradeDTO addGradeToSubmission(Long submissionId, @Valid GradeDTO gradeDTO);
-
-    void removeFileMetadatumFromSubmission(Long submissionId, Long fileMetadatumId);
 
     void removeGradeFromSubmission(Long submissionId, Long gradeId);
 

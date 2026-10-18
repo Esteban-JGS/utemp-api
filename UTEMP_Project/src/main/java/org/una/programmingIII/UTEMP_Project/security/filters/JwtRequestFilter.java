@@ -48,7 +48,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         try {
             String identificationNumber = jwtTokenProvider.getIdentificationNumberFromToken(token);
             if (identificationNumber != null && jwtTokenProvider.validateToken(token, identificationNumber)) {
-                authenticateUser(identificationNumber);
+                CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(identificationNumber);
+                // Tokens issued before the account was suspended or deactivated stop working right away
+                if (!userDetails.isEnabled()) {
+                    handleException(response, "Account is not active");
+                    return;
+                }
+                authenticateUser(userDetails);
             } else {
                 handleException(response, "Invalid JWT Token");
                 return;
@@ -67,11 +73,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void authenticateUser(String identificationNumber) {
-        CustomUserDetails customUserDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(identificationNumber);
+    private void authenticateUser(CustomUserDetails customUserDetails) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        logger.debug("User {} authenticated successfully", identificationNumber);
+        logger.debug("User {} authenticated successfully", customUserDetails.getUsername());
     }
 
     private String extractToken(HttpServletRequest request) {

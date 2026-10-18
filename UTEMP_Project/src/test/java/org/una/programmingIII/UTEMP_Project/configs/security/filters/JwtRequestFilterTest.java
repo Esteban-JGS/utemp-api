@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
 import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
 import org.una.programmingIII.UTEMP_Project.models.User;
+import org.una.programmingIII.UTEMP_Project.models.UserState;
 import org.una.programmingIII.UTEMP_Project.security.filters.JwtRequestFilter;
 import org.una.programmingIII.UTEMP_Project.security.utils.jwtTokenProvider.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
@@ -61,17 +62,21 @@ class JwtRequestFilterTest {
 
     @Test
     void validTokenAuthenticatesTheUser() throws Exception {
-        User user = new User();
-        user.setIdentificationNumber(IDENTIFICATION);
-        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN);
-        when(jwtTokenProvider.getIdentificationNumberFromToken(TOKEN)).thenReturn(IDENTIFICATION);
-        when(jwtTokenProvider.validateToken(TOKEN, IDENTIFICATION)).thenReturn(true);
-        when(userDetailsService.loadUserByUsername(IDENTIFICATION)).thenReturn(new CustomUserDetails(user));
+        givenValidTokenFor(userWithState(UserState.ACTIVE));
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
         assertEquals(IDENTIFICATION, SecurityContextHolder.getContext().getAuthentication().getName());
+    }
+
+    @Test
+    void validTokenOfASuspendedUserIsRejected() throws Exception {
+        givenValidTokenFor(userWithState(UserState.SUSPENDED));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertUnauthorized();
     }
 
     @Test
@@ -103,6 +108,20 @@ class JwtRequestFilterTest {
         filter.doFilterInternal(request, response, filterChain);
 
         assertUnauthorized();
+    }
+
+    private User userWithState(UserState state) {
+        User user = new User();
+        user.setIdentificationNumber(IDENTIFICATION);
+        user.setState(state);
+        return user;
+    }
+
+    private void givenValidTokenFor(User user) {
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + TOKEN);
+        when(jwtTokenProvider.getIdentificationNumberFromToken(TOKEN)).thenReturn(IDENTIFICATION);
+        when(jwtTokenProvider.validateToken(TOKEN, IDENTIFICATION)).thenReturn(true);
+        when(userDetailsService.loadUserByUsername(IDENTIFICATION)).thenReturn(new CustomUserDetails(user));
     }
 
     private void assertUnauthorized() throws Exception {

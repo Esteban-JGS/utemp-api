@@ -14,7 +14,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
@@ -38,27 +37,23 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
     private final SubmissionRepository submissionRepository;
     private final AssignmentRepository assignmentRepository;
-    private final FileMetadatumRepository fileMetadatumRepository;
     private final GradeRepository gradeRepository;
     private final NotificationService notificationService;
 
     private final GenericMapper<Submission, SubmissionDTO> submissionMapper;
-    private final GenericMapper<FileMetadatum, FileMetadatumDTO> fileMetadatumMapper;
     private final GenericMapper<Grade, GradeDTO> gradeMapper;
     private final UserRepository userRepository;
 
     @Autowired
     public SubmissionServiceImplementation(SubmissionRepository submissionRepository, AssignmentRepository assignmentRepository,
-                                           FileMetadatumRepository fileMetadatumRepository, GradeRepository gradeRepository, NotificationService notificationService,
+                                           GradeRepository gradeRepository, NotificationService notificationService,
                                            GenericMapperFactory mapperFactory, UserRepository userRepository) {
 
         this.submissionRepository = submissionRepository;
         this.assignmentRepository = assignmentRepository;
-        this.fileMetadatumRepository = fileMetadatumRepository;
         this.gradeRepository = gradeRepository;
         this.notificationService = notificationService;
         this.submissionMapper = mapperFactory.createMapper(Submission.class, SubmissionDTO.class);
-        this.fileMetadatumMapper = mapperFactory.createMapper(FileMetadatum.class, FileMetadatumDTO.class);
         this.gradeMapper = mapperFactory.createMapper(Grade.class, GradeDTO.class);
         this.userRepository = userRepository;
     }
@@ -223,30 +218,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
     @Override
     @Transactional
-    public FileMetadatumDTO addFileMetadatumToSubmission(Long submissionId, @Valid FileMetadatumDTO fileMetadatumDTO) {
-        try {
-            Submission submission = getEntityById(submissionId, submissionRepository, "Submission");
-            FileMetadatum fileMetadatum = fileMetadatumMapper.convertToEntity(fileMetadatumDTO);
-            fileMetadatum.setSubmission(submission); // Establecer la relación
-
-            return executeWithLogging(() -> {
-                FileMetadatum savedFileMetadatum = fileMetadatumRepository.save(fileMetadatum);
-                submission.getFileMetadata().add(savedFileMetadatum);
-                return fileMetadatumMapper.convertToDTO(savedFileMetadatum);
-            }, "Error adding file metadata to submission ID: " + submissionId);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to add file metadata: Submission not found with ID {}: {}", submissionId, e.getMessage());
-            throw e;
-        } catch (DomainException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error adding file metadata to submission ID {}: {}", submissionId, e.getMessage());
-            throw new ServiceException("Error adding file metadata", e);
-        }
-    }
-
-    @Override
-    @Transactional
     public GradeDTO addGradeToSubmission(Long submissionId, @Valid GradeDTO gradeDTO) {
         Submission submission = getEntityById(submissionId, submissionRepository, "Submission");
         boolean gradeExists = submission.getGrades().stream()
@@ -264,31 +235,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             logger.info("Grade added successfully to submission ID: {}", submissionId);
             return gradeMapper.convertToDTO(savedGrade);
         }, "Error adding grade to submission ID: " + submissionId);
-    }
-
-    @Override
-    @Transactional
-    public void removeFileMetadatumFromSubmission(Long submissionId, Long fileMetadatumId) {
-        try {
-            Submission submission = getEntityById(submissionId, submissionRepository, "Submission");
-            FileMetadatum fileMetadatum = getEntityById(fileMetadatumId, fileMetadatumRepository, "FileMetadatum");
-            if (!submission.getFileMetadata().contains(fileMetadatum)) {
-                throw new ResourceNotFoundException("File metadata in this submission", fileMetadatumId);
-            }
-            executeWithLogging(() -> {
-                submission.getFileMetadata().remove(fileMetadatum);
-                fileMetadatumRepository.delete(fileMetadatum);
-                return null;
-            }, "Error removing file metadata from submission ID: " + submissionId);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove file metadata: {}", e.getMessage());
-            throw e;
-        } catch (DomainException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error removing file metadata from submission ID {}: {}", submissionId, e.getMessage());
-            throw new ServiceException("Error removing file metadata from submission", e);
-        }
     }
 
     @Override

@@ -265,7 +265,7 @@ public class GradeController {
             )
     })
     @GetMapping("/submissions/{submissionId}/grades")
-    @PreAuthorize("hasAuthority('GET_SUBMISSION_GRADES')")
+    @PreAuthorize("hasAuthority('GET_SUBMISSION_GRADES') and @access.canViewSubmission(#submissionId, principal)")
     public ResponseEntity<PageDTO<GradeDTO>> getGradesBySubmissionId(
             @Parameter(description = "ID of the submission to retrieve grades for", required = true)
             @PathVariable Long submissionId, Pageable pageable) {

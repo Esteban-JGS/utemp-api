@@ -10,4 +10,7 @@ import org.una.programmingIII.UTEMP_Project.models.Assignment;
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     @Query("SELECT a FROM Assignment a WHERE a.course.id = :courseId")
     Page<Assignment> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+
+    @Query("select count(a) > 0 from Assignment a where a.id = :assignmentId and a.course.teacher.id = :userId")
+    boolean isCourseTeacher(@Param("assignmentId") Long assignmentId, @Param("userId") Long userId);
 }

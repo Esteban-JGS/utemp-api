@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
@@ -255,7 +254,7 @@ public class SubmissionController {
             )
     })
     @GetMapping("/assignment/{assignmentId}")
-    @PreAuthorize("hasAuthority('GET_ASSIGNMENT_SUBMISSIONS')")
+    @PreAuthorize("hasAuthority('GET_ASSIGNMENT_SUBMISSIONS') and @access.canManageAssignment(#assignmentId, principal)")
     public ResponseEntity<PageDTO<SubmissionDTO>> getSubmissionsByAssignmentId(
             @Parameter(description = "ID of the assignment", required = true) @PathVariable Long assignmentId,
             Pageable pageable) {
@@ -275,53 +274,6 @@ public class SubmissionController {
         }
 
         return ResponseEntity.ok(submissionsDTOPage);
-    }
-
-    @Operation(
-            summary = "Add file metadata to submission",
-            description = "Add file metadata to an existing submission."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "File metadata added successfully.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = FileMetadatumDTO.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid data provided.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Invalid data provided.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Submission not found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Submission not found.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Internal server error.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Internal server error.\"}")
-                    )
-            )
-    })
-    @PostMapping("/{submissionId}/file-metadata")
-    @PreAuthorize("hasAuthority('ADD_SUBMISSION_FILES')")
-    public ResponseEntity<FileMetadatumDTO> addFileMetadatumToSubmission(
-            @Parameter(description = "ID of the submission", required = true) @PathVariable Long submissionId,
-            @Valid @RequestBody FileMetadatumDTO fileMetadatumDTO) {
-        FileMetadatumDTO createdFileMetadatum = submissionService.addFileMetadatumToSubmission(submissionId, fileMetadatumDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdFileMetadatum);
     }
 
     @Operation(
@@ -363,50 +315,12 @@ public class SubmissionController {
             )
     })
     @PostMapping("/{submissionId}/grades")
-    @PreAuthorize("hasAuthority('ADD_SUBMISSION_GRADES')")
+    @PreAuthorize("hasAuthority('ADD_SUBMISSION_GRADES') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<GradeDTO> addGradeToSubmission(
             @Parameter(description = "ID of the submission", required = true) @PathVariable Long submissionId,
             @Valid @RequestBody GradeDTO gradeDTO) {
         GradeDTO createdGrade = submissionService.addGradeToSubmission(submissionId, gradeDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
-    }
-
-    @Operation(
-            summary = "Remove File Metadata from Submission",
-            description = "This endpoint allows users to remove a specific file metadata entry from a designated submission. The IDs for both the submission and the file metadata to be removed are provided as path parameters. Upon successful execution, the specified file metadata will no longer be associated with the submission."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "File metadata successfully removed from the submission. No content is returned as confirmation of the operation.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"File metadata successfully removed from the submission.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Submission or file metadata not found. This indicates that either the specified submission ID or file metadata ID does not exist.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Submission or file metadata not found.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "An error occurred while removing the file metadata from the submission. This indicates a server-side issue that prevented the operation from completing successfully.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"An error occurred while removing the file metadata from the submission.\"}")
-                    )
-            )
-    })
-    @DeleteMapping("/{submissionId}/file-metadata/{fileMetadatumId}")
-    @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_FILES')")
-    public ResponseEntity<Void> removeFileMetadatumFromSubmission(@PathVariable Long submissionId,
-                                                                  @PathVariable Long fileMetadatumId) {
-        submissionService.removeFileMetadatumFromSubmission(submissionId, fileMetadatumId);
-        return ResponseEntity.noContent().build();
     }
 
 
@@ -441,7 +355,7 @@ public class SubmissionController {
             )
     })
     @DeleteMapping("/{submissionId}/grades/{gradeId}")
-    @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_GRADES')")
+    @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_GRADES') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<Void> removeGradeFromSubmission(@PathVariable Long submissionId,
                                                           @PathVariable Long gradeId) {
         submissionService.removeGradeFromSubmission(submissionId, gradeId);
@@ -449,7 +363,7 @@ public class SubmissionController {
     }
 
     @PutMapping("/{submissionId}/{gradeValue}")
-    @PreAuthorize("hasAuthority('EVALUATE_SUBMISSIONS')")
+    @PreAuthorize("hasAuthority('EVALUATE_SUBMISSIONS') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<Void> manualReviewSubmission(@PathVariable Long submissionId, @PathVariable Double gradeValue, @RequestBody String comments) {
         Optional<Grade> grade = submissionService.manualReviewSubmission(submissionId, gradeValue, comments);
         if (grade.isPresent()) {

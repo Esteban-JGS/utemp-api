@@ -14,4 +14,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("SELECT c FROM Course c JOIN FETCH c.teacher WHERE c.department.id = :departmentId")
     Page<Course> findByDepartmentIdWithTeacher(@Param("departmentId") Long departmentId, Pageable pageable);
 
+    @Query("select count(c) > 0 from Course c where c.id = :courseId and c.teacher.id = :userId")
+    boolean isTeacher(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

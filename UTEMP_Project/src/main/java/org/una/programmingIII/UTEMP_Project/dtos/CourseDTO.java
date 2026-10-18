@@ -60,10 +60,6 @@ public class CourseDTO {
 
     // Collections
     @Builder.Default
-    @JsonManagedReference("course-assignments")  // Unique name for assignments reference
-    private List<AssignmentDTO> assignment = new ArrayList<>();
-
-    @Builder.Default
     @JsonManagedReference("course-enrollments")  // Unique name for enrollments reference
     private List<EnrollmentDTO> enrollments = new ArrayList<>();
 
