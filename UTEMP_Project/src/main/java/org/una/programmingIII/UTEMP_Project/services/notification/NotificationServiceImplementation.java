@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.notification;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -62,6 +63,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all notifications: {}", e.getMessage());
             throw new InvalidDataException("Error fetching notifications from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all notifications: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all notifications");
@@ -78,6 +81,8 @@ public class NotificationServiceImplementation implements NotificationService {
             }, "Error fetching notification by ID");
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to fetch notification: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error fetching notification by ID: {}", e.getMessage());
@@ -98,6 +103,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to create notification: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error creating notification: {}", e.getMessage());
             throw new ServiceException("Error creating notification", e);
@@ -117,6 +124,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to update notification: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error updating notification: {}", e.getMessage());
             throw new ServiceException("Error updating notification", e);
@@ -135,6 +144,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to delete notification: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error deleting notification: {}", e.getMessage());
             throw new ServiceException("Error deleting notification", e);
@@ -152,6 +163,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching notifications for user ID {}: {}", userId, e.getMessage());
             throw new InvalidDataException("Error fetching notifications from the database for user ID " + userId);
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching notifications for user ID {}: {}", userId, e.getMessage());
             throw new InvalidDataException("Error fetching notifications for user ID " + userId);
@@ -173,6 +186,8 @@ public class NotificationServiceImplementation implements NotificationService {
             }, "Error adding notification to user");
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to add notification to user {}: {}", userId, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error adding notification to user {}: {}", userId, e.getMessage());
@@ -197,6 +212,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to remove notification from user {}: {}", userId, e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error removing notification from user {}: {}", userId, e.getMessage());
             throw new ServiceException("Error removing notification from user", e);
@@ -215,6 +232,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to mark notification as read: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error marking notification as read: {}", e.getMessage());
             throw new ServiceException("Error marking notification as read", e);
@@ -227,12 +246,14 @@ public class NotificationServiceImplementation implements NotificationService {
         try {
             // Busca el usuario por ID y lanza excepción si no lo encuentra
             User userEntity = userRepository.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: ", userId));
+                    .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
             // Convierte la entidad a DTO
             UserDTO userDTO;
             try {
                 userDTO = userMapper.convertToDTO(userEntity);
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Error converting User entity to DTO for user {}: {}", userId, e.getMessage());
                 throw new ServiceException("Error converting User entity to DTO", e);
@@ -249,6 +270,8 @@ public class NotificationServiceImplementation implements NotificationService {
         } catch (ResourceNotFoundException e) {
             logger.error("Error: {}", e.getMessage());
             throw e; // Lanza excepción si el usuario no se encuentra
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error sending notification to user {}: {}", userId, e.getMessage());
             throw new ServiceException("Error sending notification", e);
@@ -276,6 +299,8 @@ public class NotificationServiceImplementation implements NotificationService {
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);

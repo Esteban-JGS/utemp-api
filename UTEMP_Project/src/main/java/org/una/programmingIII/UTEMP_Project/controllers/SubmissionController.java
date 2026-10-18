@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
 import org.una.programmingIII.UTEMP_Project.services.autoReview.AutoReviewService;
 import org.una.programmingIII.UTEMP_Project.services.submission.SubmissionService;
@@ -69,14 +67,9 @@ public class SubmissionController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<PageDTO<SubmissionDTO>> getAllSubmissions(Pageable pageable) {
-        try {
-            Page<SubmissionDTO> submissionsPage = submissionService.getAllSubmissions(pageable);
-            PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
-            return ResponseEntity.ok(submissionsDTOPage);
-        } catch (Exception e) {
-            logger.error("Error retrieving submissions", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Page<SubmissionDTO> submissionsPage = submissionService.getAllSubmissions(pageable);
+        PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
+        return ResponseEntity.ok(submissionsDTOPage);
     }
 
     @Operation(
@@ -113,17 +106,12 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<SubmissionDTO> getSubmissionById(
             @Parameter(description = "ID of the submission to retrieve", required = true) @PathVariable Long id) {
-        try {
-            Optional<SubmissionDTO> submissionDTO = submissionService.getSubmissionById(id);
-            return submissionDTO.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("1Submission not found with id: {}", id);
-                        return ResponseEntity.notFound().build();
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving submission with id: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Optional<SubmissionDTO> submissionDTO = submissionService.getSubmissionById(id);
+        return submissionDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("1Submission not found with id: {}", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
 
@@ -161,24 +149,14 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<SubmissionDTO> createSubmission(
             @Valid @RequestBody SubmissionDTO submissionDTO) {
-        try {
-            // Llamada al servicio para crear la submission
-            SubmissionDTO createdSubmission = submissionService.createSubmission(submissionDTO);
+        // Llamada al servicio para crear la submission
+        SubmissionDTO createdSubmission = submissionService.createSubmission(submissionDTO);
 
-            System.out.println(submissionDTO.toString());
+        System.out.println(submissionDTO.toString());
 
-            autoReviewService.autoReviewSubmission(createdSubmission.getId());//todo
+        autoReviewService.autoReviewSubmission(createdSubmission.getId());//todo
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
-        } catch (InvalidDataException e) {
-            // Excepción para datos inválidos (por ejemplo, validaciones de campo en el DTO)
-            logger.warn("Invalid data for submission creation: {}", submissionDTO, e);
-            return ResponseEntity.badRequest().build(); // Respuesta 400 Bad Request
-        } catch (Exception e) {
-            // Excepción genérica para otros errores
-            logger.error("Error creating submission", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Respuesta 500 Internal Server Error
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
     }
 
     @Operation(
@@ -224,20 +202,12 @@ public class SubmissionController {
     public ResponseEntity<SubmissionDTO> updateSubmission(
             @Parameter(description = "ID of the submission to update", required = true) @PathVariable Long id,
             @Valid @RequestBody SubmissionDTO submissionDTO) {
-        try {
-            Optional<SubmissionDTO> updatedSubmission = submissionService.updateSubmission(id, submissionDTO);
-            return updatedSubmission.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Submission not found with id: {}", id);
-                        return ResponseEntity.notFound().build();
-                    });
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for submission update: {}", submissionDTO, e);
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            logger.error("Error updating submission with id: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Optional<SubmissionDTO> updatedSubmission = submissionService.updateSubmission(id, submissionDTO);
+        return updatedSubmission.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Submission not found with id: {}", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @Operation(
@@ -270,16 +240,8 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<Void> deleteSubmission(
             @Parameter(description = "ID of the submission to delete", required = true) @PathVariable Long id) {
-        try {
-            submissionService.deleteSubmission(id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Submission not found with id: {}", id, e);
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error deleting submission with id: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        submissionService.deleteSubmission(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -305,27 +267,22 @@ public class SubmissionController {
     public ResponseEntity<PageDTO<SubmissionDTO>> getSubmissionsByAssignmentId(
             @Parameter(description = "ID of the assignment", required = true) @PathVariable Long assignmentId,
             Pageable pageable) {
-        try {
-            Page<SubmissionDTO> submissionsPage = submissionService.getSubmissionsByAssignmentId(assignmentId, pageable);
+        Page<SubmissionDTO> submissionsPage = submissionService.getSubmissionsByAssignmentId(assignmentId, pageable);
 //            System.out.println(submissionsPage.toString());
 //            for (SubmissionDTO dtp : submissionsPage) {
 ////                System.out.println(dtp.toString());
 //            }
-            PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
-            for (SubmissionDTO dtp : submissionsDTOPage.getContent()) {
+        PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
+        for (SubmissionDTO dtp : submissionsDTOPage.getContent()) {
 //                System.out.println(dtp.toString());
-                dtp.setAsignaciontId(assignmentId);
-                dtp.setAsignaciontitle(dtp.getAssignment().getTitle());
-                dtp.setStudentUniqueName(dtp.getStudent().getName());
-                dtp.setStudeId(dtp.getStudent().getId());
-                dtp.setMetadataID(dtp.getFileMetadata().getFirst().getId());
-            }
-
-            return ResponseEntity.ok(submissionsDTOPage);
-        } catch (Exception e) {
-            logger.error("Error retrieving submissions for assignment id: {}", assignmentId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            dtp.setAsignaciontId(assignmentId);
+            dtp.setAsignaciontitle(dtp.getAssignment().getTitle());
+            dtp.setStudentUniqueName(dtp.getStudent().getName());
+            dtp.setStudeId(dtp.getStudent().getId());
+            dtp.setMetadataID(dtp.getFileMetadata().getFirst().getId());
         }
+
+        return ResponseEntity.ok(submissionsDTOPage);
     }
 
     @Operation(
@@ -371,19 +328,8 @@ public class SubmissionController {
     public ResponseEntity<FileMetadatumDTO> addFileMetadatumToSubmission(
             @Parameter(description = "ID of the submission", required = true) @PathVariable Long submissionId,
             @Valid @RequestBody FileMetadatumDTO fileMetadatumDTO) {
-        try {
-            FileMetadatumDTO createdFileMetadatum = submissionService.addFileMetadatumToSubmission(submissionId, fileMetadatumDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdFileMetadatum);
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for adding file metadata to submission id: {}", submissionId, e);
-            return ResponseEntity.badRequest().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Submission not found with id: {}", submissionId, e);
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error adding file metadata to submission id: {}", submissionId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        FileMetadatumDTO createdFileMetadatum = submissionService.addFileMetadatumToSubmission(submissionId, fileMetadatumDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdFileMetadatum);
     }
 
     @Operation(
@@ -429,19 +375,8 @@ public class SubmissionController {
     public ResponseEntity<GradeDTO> addGradeToSubmission(
             @Parameter(description = "ID of the submission", required = true) @PathVariable Long submissionId,
             @Valid @RequestBody GradeDTO gradeDTO) {
-        try {
-            GradeDTO createdGrade = submissionService.addGradeToSubmission(submissionId, gradeDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
-        } catch (InvalidDataException e) {
-            logger.warn("Invalid data for adding grade to submission id: {}", submissionId, e);
-            return ResponseEntity.badRequest().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Submission not found with id: {}", submissionId, e);
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error adding grade to submission id: {}", submissionId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        GradeDTO createdGrade = submissionService.addGradeToSubmission(submissionId, gradeDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
     }
 
     @Operation(
@@ -478,16 +413,8 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_FILES')")
     public ResponseEntity<Void> removeFileMetadatumFromSubmission(@PathVariable Long submissionId,
                                                                   @PathVariable Long fileMetadatumId) {
-        try {
-            submissionService.removeFileMetadatumFromSubmission(submissionId, fileMetadatumId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove file metadata ID {} from submission ID {}: {}", fileMetadatumId, submissionId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Error removing file metadata ID {} from submission ID {}: {}", fileMetadatumId, submissionId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        submissionService.removeFileMetadatumFromSubmission(submissionId, fileMetadatumId);
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -525,16 +452,8 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_GRADES')")
     public ResponseEntity<Void> removeGradeFromSubmission(@PathVariable Long submissionId,
                                                           @PathVariable Long gradeId) {
-        try {
-            submissionService.removeGradeFromSubmission(submissionId, gradeId);
-            return ResponseEntity.noContent().build(); // 204 No Content response on successful removal
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove grade ID {} from submission ID {}: {}", gradeId, submissionId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Error removing grade ID {} from submission ID {}: {}", gradeId, submissionId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        submissionService.removeGradeFromSubmission(submissionId, gradeId);
+        return ResponseEntity.noContent().build(); // 204 No Content response on successful removal
     }
 
     @PutMapping("/{submissionId}/{gradeValue}")

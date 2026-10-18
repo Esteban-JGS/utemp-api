@@ -18,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.grade.GradeService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -66,18 +64,10 @@ public class GradeController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_GRADES')")
     public ResponseEntity<PageDTO<GradeDTO>> getAllGrades(Pageable pageable) {
-        try {
-            Page<GradeDTO> gradesPage = gradeService.getAllGrades(pageable);
-            PageDTO<GradeDTO> gradesDTOPage = PageConverter.convertPageToDTO(gradesPage, gradeDTO -> gradeDTO);
-            logger.info("Fetched all grades successfully.");
-            return ResponseEntity.ok(gradesDTOPage);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while fetching grades: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            logger.error("Error while fetching grades: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Page<GradeDTO> gradesPage = gradeService.getAllGrades(pageable);
+        PageDTO<GradeDTO> gradesDTOPage = PageConverter.convertPageToDTO(gradesPage, gradeDTO -> gradeDTO);
+        logger.info("Fetched all grades successfully.");
+        return ResponseEntity.ok(gradesDTOPage);
     }
 
     @Operation(
@@ -111,20 +101,15 @@ public class GradeController {
     @PreAuthorize("hasAuthority('MANAGE_GRADES')")
     public ResponseEntity<GradeDTO> getGradeById(
             @Parameter(description = "ID of the grade to retrieve", required = true) @PathVariable Long id) {
-        try {
-            return gradeService.getGradeById(id)
-                    .map(gradeDTO -> {
-                        logger.info("Fetched grade with ID: {}", id);
-                        return ResponseEntity.ok(gradeDTO);
-                    })
-                    .orElseGet(() -> {
-                        logger.warn("Grade with ID: {} not found.", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (Exception e) {
-            logger.error("Error while fetching grade with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return gradeService.getGradeById(id)
+                .map(gradeDTO -> {
+                    logger.info("Fetched grade with ID: {}", id);
+                    return ResponseEntity.ok(gradeDTO);
+                })
+                .orElseGet(() -> {
+                    logger.warn("Grade with ID: {} not found.", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -161,17 +146,9 @@ public class GradeController {
     @PreAuthorize("hasAuthority('MANAGE_GRADES')")
     public ResponseEntity<GradeDTO> createGrade(
             @Parameter(description = "Grade data to create", required = true) @Valid @RequestBody GradeDTO gradeDTO) {
-        try {
-            GradeDTO createdGrade = gradeService.createGrade(gradeDTO);
-            logger.info("Created new grade: {}", createdGrade);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while creating grade: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            logger.error("Error while creating grade: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        GradeDTO createdGrade = gradeService.createGrade(gradeDTO);
+        logger.info("Created new grade: {}", createdGrade);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdGrade);
     }
 
     @Operation(
@@ -214,26 +191,15 @@ public class GradeController {
     public ResponseEntity<GradeDTO> updateGrade(
             @Parameter(description = "ID of the grade to update", required = true) @PathVariable Long id,
             @Valid @RequestBody GradeDTO gradeDTO) {
-        try {
-            return gradeService.updateGrade(id, gradeDTO)
-                    .map(updatedGrade -> {
-                        logger.info("Updated grade with ID: {}", id);
-                        return ResponseEntity.ok(updatedGrade);
-                    })
-                    .orElseGet(() -> {
-                        logger.warn("Grade with ID: {} not found for update.", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    });
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while updating grade with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Grade with ID: {} not found for update.", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error while updating grade with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return gradeService.updateGrade(id, gradeDTO)
+                .map(updatedGrade -> {
+                    logger.info("Updated grade with ID: {}", id);
+                    return ResponseEntity.ok(updatedGrade);
+                })
+                .orElseGet(() -> {
+                    logger.warn("Grade with ID: {} not found for update.", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+                });
     }
 
     @Operation(
@@ -266,17 +232,9 @@ public class GradeController {
     @PreAuthorize("hasAuthority('MANAGE_GRADES')")
     public ResponseEntity<Void> deleteGrade(
             @Parameter(description = "ID of the grade to delete", required = true) @PathVariable Long id) {
-        try {
-            gradeService.deleteGrade(id);
-            logger.info("Deleted grade with ID: {}", id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Grade with ID: {} not found for deletion.", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error while deleting grade with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        gradeService.deleteGrade(id);
+        logger.info("Deleted grade with ID: {}", id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -311,18 +269,10 @@ public class GradeController {
     public ResponseEntity<PageDTO<GradeDTO>> getGradesBySubmissionId(
             @Parameter(description = "ID of the submission to retrieve grades for", required = true)
             @PathVariable Long submissionId, Pageable pageable) {
-        try {
-            Page<GradeDTO> gradesPage = gradeService.getGradesBySubmissionId(submissionId, pageable);
-            PageDTO<GradeDTO> gradesDTOPage = PageConverter.convertPageToDTO(gradesPage, gradeDTO -> gradeDTO);
-            logger.info("Fetched grades for submission ID: {}", submissionId);
-            return ResponseEntity.ok(gradesDTOPage);
+        Page<GradeDTO> gradesPage = gradeService.getGradesBySubmissionId(submissionId, pageable);
+        PageDTO<GradeDTO> gradesDTOPage = PageConverter.convertPageToDTO(gradesPage, gradeDTO -> gradeDTO);
+        logger.info("Fetched grades for submission ID: {}", submissionId);
+        return ResponseEntity.ok(gradesDTOPage);
 
-        } catch (ResourceNotFoundException e) {
-            logger.warn("No grades found for submission ID: {}.", submissionId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error while fetching grades for submission ID {}: {}", submissionId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 }

@@ -19,8 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.FacultyDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UniversityDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.university.UniversityService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -66,18 +64,13 @@ public class UniversityController {
     @PreAuthorize("hasAuthority('MANAGE_UNIVERSITIES')")
     public ResponseEntity<PageDTO<UniversityDTO>> getAllUniversities(Pageable pageable) {
         logger.info("Fetching all universities with pagination");
-        try {
-            Page<UniversityDTO> universitiesPage = universityService.getAllUniversities(pageable);
+        Page<UniversityDTO> universitiesPage = universityService.getAllUniversities(pageable);
 
-            // Convertir la página a PageDTO usando PageConverter
-            PageDTO<UniversityDTO> universityDTOPage = PageConverter.convertPageToDTO(universitiesPage, universityDTO -> universityDTO);
+        // Convertir la página a PageDTO usando PageConverter
+        PageDTO<UniversityDTO> universityDTOPage = PageConverter.convertPageToDTO(universitiesPage, universityDTO -> universityDTO);
 
-            // Retornar la respuesta con el PageDTO
-            return ResponseEntity.ok(universityDTOPage);
-        } catch (Exception e) {
-            logger.error("Error fetching universities: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        // Retornar la respuesta con el PageDTO
+        return ResponseEntity.ok(universityDTOPage);
     }
 
 
@@ -117,20 +110,12 @@ public class UniversityController {
     public ResponseEntity<UniversityDTO> getUniversityById(
             @Parameter(description = "ID of the university to retrieve", required = true) @PathVariable Long id) {
         logger.info("Fetching university with ID: {}", id);
-        try {
-            Optional<UniversityDTO> university = universityService.getUniversityById(id);
-            return university.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("University with ID: {} not found", id);
-                        return ResponseEntity.notFound().build();
-                    });
-        } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found for ID: {} - {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error fetching university with ID: {} - {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Optional<UniversityDTO> university = universityService.getUniversityById(id);
+        return university.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("University with ID: {} not found", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @Operation(
@@ -169,16 +154,8 @@ public class UniversityController {
     public ResponseEntity<UniversityDTO> createUniversity(
             @Parameter(description = "University data to create", required = true) @Valid @RequestBody UniversityDTO universityDTO) {
         logger.info("Creating new university: {}", universityDTO);
-        try {
-            UniversityDTO createdUniversity = universityService.createUniversity(universityDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdUniversity);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for university creation: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error creating university: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        UniversityDTO createdUniversity = universityService.createUniversity(universityDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUniversity);
     }
 
     @Operation(
@@ -226,23 +203,12 @@ public class UniversityController {
             @Parameter(description = "ID of the university to update", required = true) @PathVariable Long id,
             @Valid @RequestBody UniversityDTO universityDTO) {
         logger.info("Updating university with ID: {}", id);
-        try {
-            Optional<UniversityDTO> updatedUniversity = universityService.updateUniversity(id, universityDTO);
-            return updatedUniversity.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("University with ID: {} not found for update", id);
-                        return ResponseEntity.notFound().build();
-                    });
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data provided for university update: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (ResourceNotFoundException e) {
-            logger.error("University with ID: {} not found: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error updating university with ID: {} - {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Optional<UniversityDTO> updatedUniversity = universityService.updateUniversity(id, universityDTO);
+        return updatedUniversity.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("University with ID: {} not found for update", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @Operation(
@@ -284,19 +250,8 @@ public class UniversityController {
     public ResponseEntity<Void> deleteUniversity(
             @Parameter(description = "ID of the university to delete", required = true) @PathVariable Long id) {
         logger.info("Deleting university with ID: {}", id);
-        try {
-            universityService.deleteUniversity(id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("University with ID: {} not found for deletion", id);
-            return ResponseEntity.notFound().build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data provided for university deletion: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error deleting university with ID: {} - {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        universityService.deleteUniversity(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -339,19 +294,8 @@ public class UniversityController {
             @Parameter(description = "ID of the university to which the faculty will be added", required = true) @PathVariable Long universityId,
             @Valid @RequestBody FacultyDTO facultyDTO) {
         logger.info("Adding faculty to university with ID: {}", universityId);
-        try {
-            universityService.addFacultyToUniversity(universityId, facultyDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("University with ID: {} not found when adding faculty", universityId);
-            return ResponseEntity.notFound().build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data provided for adding faculty: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error adding faculty to university with ID: {} - {}", universityId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        universityService.addFacultyToUniversity(universityId, facultyDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
 
@@ -387,15 +331,7 @@ public class UniversityController {
             @Parameter(description = "ID of the university", required = true) @PathVariable Long universityId,
             @PathVariable Long facultyId) {
         logger.info("Removing faculty with ID: {} from university with ID: {}", facultyId, universityId);
-        try {
-            universityService.removeFacultyFromUniversity(universityId, facultyId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Faculty with ID: {} not found in university with ID: {}", facultyId, universityId);
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error removing faculty from university with ID: {} - {}", universityId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        universityService.removeFacultyFromUniversity(universityId, facultyId);
+        return ResponseEntity.noContent().build();
     }
 }

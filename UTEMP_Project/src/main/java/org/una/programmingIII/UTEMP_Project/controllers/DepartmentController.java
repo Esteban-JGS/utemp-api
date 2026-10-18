@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.CourseDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.DepartmentDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.department.DepartmentService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
@@ -88,17 +87,9 @@ public class DepartmentController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     public ResponseEntity<PageDTO<DepartmentDTO>> getAllDepartments(Pageable pageable) {
-        try {
-            Page<DepartmentDTO> departmentsPage = departmentService.getAllDepartments(pageable);
-            logger.info("Fetched all departments successfully.");
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(departmentsPage, departmentDTO -> departmentDTO));
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while fetching departments: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error while fetching departments: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Page<DepartmentDTO> departmentsPage = departmentService.getAllDepartments(pageable);
+        logger.info("Fetched all departments successfully.");
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(departmentsPage, departmentDTO -> departmentDTO));
     }
 
     @Operation(
@@ -154,18 +145,10 @@ public class DepartmentController {
     @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     public ResponseEntity<DepartmentDTO> getDepartmentById(
             @Parameter(description = "ID of the department to be fetched") @PathVariable Long id) {
-        try {
-            DepartmentDTO departmentDTO = departmentService.getDepartmentById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Department", id));
-            logger.info("Fetched department with ID {} successfully.", id);
-            return ResponseEntity.ok(departmentDTO);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Department not found: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error while fetching department by ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        DepartmentDTO departmentDTO = departmentService.getDepartmentById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Department", id));
+        logger.info("Fetched department with ID {} successfully.", id);
+        return ResponseEntity.ok(departmentDTO);
     }
 
     @Operation(
@@ -220,17 +203,9 @@ public class DepartmentController {
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     public ResponseEntity<DepartmentDTO> createDepartment(@Valid @RequestBody DepartmentDTO departmentDTO) {
-        try {
-            DepartmentDTO createdDepartment = departmentService.createDepartment(departmentDTO);
-            logger.info("Department created successfully: {}", createdDepartment);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdDepartment);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for creating department: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error while creating department: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        DepartmentDTO createdDepartment = departmentService.createDepartment(departmentDTO);
+        logger.info("Department created successfully: {}", createdDepartment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDepartment);
     }
 
     @Operation(
@@ -286,18 +261,10 @@ public class DepartmentController {
     @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     public ResponseEntity<DepartmentDTO> updateDepartment(@Parameter(description = "ID of the department to be updated") @PathVariable Long id,
                                                           @Valid @RequestBody DepartmentDTO departmentDTO) {
-        try {
-            DepartmentDTO updatedDepartment = departmentService.updateDepartment(id, departmentDTO)
-                    .orElseThrow(() -> new ResourceNotFoundException("Department", id));
-            logger.info("Department with ID {} updated successfully.", id);
-            return ResponseEntity.ok(updatedDepartment);
-        } catch (ResourceNotFoundException e) {
-            logger.error("Department not found for update: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error while updating department ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        DepartmentDTO updatedDepartment = departmentService.updateDepartment(id, departmentDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Department", id));
+        logger.info("Department with ID {} updated successfully.", id);
+        return ResponseEntity.ok(updatedDepartment);
     }
 
     @Operation(
@@ -348,17 +315,9 @@ public class DepartmentController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGE_DEPARTMENTS')")
     public ResponseEntity<Void> deleteDepartment(@Parameter(description = "ID of the department to be deleted") @PathVariable Long id) {
-        try {
-            departmentService.deleteDepartment(id);
-            logger.info("Department with ID {} deleted successfully.", id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.error("Department not found for deletion: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Unexpected error while deleting department ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        departmentService.deleteDepartment(id);
+        logger.info("Department with ID {} deleted successfully.", id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -413,17 +372,9 @@ public class DepartmentController {
     public ResponseEntity<PageDTO<DepartmentDTO>> getDepartmentsByFacultyId(
             @Parameter(description = "ID of the faculty to retrieve departments from") @PathVariable Long facultyId,
             Pageable pageable) {
-        try {
-            Page<DepartmentDTO> departmentsPage = departmentService.getDepartmentsByFacultyId(facultyId, pageable);
-            logger.info("Fetched departments for faculty ID {} successfully.", facultyId);
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(departmentsPage, departmentDTO -> departmentDTO));
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while fetching departments for faculty ID {}: {}", facultyId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error while fetching departments for faculty ID {}: {}", facultyId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Page<DepartmentDTO> departmentsPage = departmentService.getDepartmentsByFacultyId(facultyId, pageable);
+        logger.info("Fetched departments for faculty ID {} successfully.", facultyId);
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(departmentsPage, departmentDTO -> departmentDTO));
     }
 
     @Operation(
@@ -494,20 +445,9 @@ public class DepartmentController {
     public ResponseEntity<Void> addCourseToDepartment(
             @Parameter(description = "ID of the department to which the course will be added") @PathVariable Long departmentId,
             @Valid @RequestBody CourseDTO courseDTO) {
-        try {
-            departmentService.addCourseToDepartment(departmentId, courseDTO);
-            logger.info("Course added to department ID {} successfully.", departmentId);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data while adding course to department: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (ResourceNotFoundException e) {
-            logger.error("Department not found for adding course: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Unexpected error while adding course to department ID {}: {}", departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        departmentService.addCourseToDepartment(departmentId, courseDTO);
+        logger.info("Course added to department ID {} successfully.", departmentId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(
@@ -544,15 +484,7 @@ public class DepartmentController {
     @PreAuthorize("hasAuthority('REMOVE_DEPARTMENT_COURSES')")
     public ResponseEntity<Void> removeCourseFromDepartment(@PathVariable Long departmentId,
                                                            @PathVariable Long courseId) {
-        try {
-            departmentService.removeCourseFromDepartment(departmentId, courseId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove course ID {} from department ID {}: {}", courseId, departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error removing course ID {} from department ID {}: {}", courseId, departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        departmentService.removeCourseFromDepartment(departmentId, courseId);
+        return ResponseEntity.noContent().build();
     }
 }
