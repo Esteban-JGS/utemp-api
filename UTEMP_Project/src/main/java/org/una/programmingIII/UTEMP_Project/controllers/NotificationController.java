@@ -61,6 +61,7 @@ public class NotificationController {
             )
     })
     @GetMapping
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<NotificationDTO>> getAllNotifications(Pageable pageable) {
         try {
             Page<NotificationDTO> notificationsPage = notificationService.getAllNotifications(pageable);
@@ -150,6 +151,7 @@ public class NotificationController {
             )
     })
     @PostMapping
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<NotificationDTO> createNotification(@Valid @RequestBody NotificationDTO notificationDTO) {
         try {
             NotificationDTO createdNotification = notificationService.createNotification(notificationDTO);
@@ -203,6 +205,7 @@ public class NotificationController {
             )
     })
     @PutMapping("/{NotiId}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<NotificationDTO> updateNotification(@PathVariable Long NotiId,
                                                               @Valid @RequestBody NotificationDTO notificationDTO) {
         try {
@@ -251,6 +254,7 @@ public class NotificationController {
             )
     })
     @DeleteMapping("/{NotiId}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long NotiId) {
         try {
             notificationService.deleteNotification(NotiId);
@@ -288,7 +292,7 @@ public class NotificationController {
             )
     })
     @GetMapping("/user/{userId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("#userId == principal.user.id or hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<NotificationDTO>> getNotificationsByUserId(@PathVariable Long userId, Pageable pageable) {
         try {
             Page<NotificationDTO> notificationsPage = notificationService.getNotificationsByUserId(userId, pageable);
@@ -328,6 +332,7 @@ public class NotificationController {
             )
     })
     @PostMapping("/user/{userId}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> addNotificationToUser(@PathVariable Long userId,
                                                       @Valid @RequestBody NotificationDTO notificationDTO) {
         try {
@@ -370,6 +375,7 @@ public class NotificationController {
             )
     })
     @DeleteMapping("/user/{userId}/{notificationId}")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> removeNotificationFromUser(@PathVariable Long userId,
                                                            @PathVariable Long notificationId) {
         try {
@@ -445,6 +451,7 @@ public class NotificationController {
             )
     })
     @PostMapping("/send")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> sendNotificationToUser(@RequestParam Long userId,
                                                        @RequestParam String message) {
         try {
