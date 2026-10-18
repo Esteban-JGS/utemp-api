@@ -1,21 +1,26 @@
 package org.una.programmingIII.UTEMP_Project.services.file;
 
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
+import org.una.programmingIII.UTEMP_Project.models.User;
 
-import java.io.IOException;
-import java.util.List;
+import java.nio.file.Path;
 
+/**
+ * Every operation receives the authenticated user and checks that they may access the file.
+ * Reading is allowed to the owner, the teacher of the course and admins; writing only to the owner and admins.
+ */
 public interface FileService {
 
-    FileMetadatumDTO createNewFileMetadata(FileMetadatumDTO fileDTO);
+    FileMetadatumDTO createNewFileMetadata(FileMetadatumDTO fileDTO, User requester);
 
-    FileMetadatumDTO getFileMetadatumById(Long id);
+    FileMetadatumDTO getFileMetadatumById(Long id, User requester);
 
-//    void uploadFileChunk(FileMetadatumDTO fileChunkDTO) throws IOException;
+    StoredFile getFileForDownload(Long id, User requester);
 
-//    List<FileMetadatumDTO> downloadFileInChunks(Long fileId) throws IOException;
+    void deleteFile(Long fileId, User requester);
 
-    boolean deleteFile(Long fileId) throws IOException;
+    void receiveFileChunk(FileMetadatumDTO fileDTO, User requester);
 
-     void receiveFileChunk(FileMetadatumDTO fileDTO);
+    record StoredFile(String fileName, Path path, long size) {
+    }
 }
