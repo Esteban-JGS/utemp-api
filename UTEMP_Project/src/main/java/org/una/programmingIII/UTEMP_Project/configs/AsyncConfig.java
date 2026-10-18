@@ -29,29 +29,7 @@ public class AsyncConfig {
 
         logger.info("Async Executor initialized with core pool size: {}, max pool size: {}, queue capacity: {}",
                 executor.getCorePoolSize(), executor.getMaxPoolSize(), executor.getQueueCapacity());
-
-        startExecutorMonitor(executor);
-
         return executor;
     }
 
-    // Método para monitorear el estado del ThreadPoolExecutor
-    private void startExecutorMonitor(ThreadPoolTaskExecutor executor) {
-        new Thread(() -> {
-            while (true) {
-//                try {
-//                    Thread.sleep(5000);  // Actualiza cada 5 segundos
-//
-//                    ThreadPoolExecutor threadPoolExecutor = executor.getThreadPoolExecutor();
-//                    logger.info("ThreadPool status: Active Threads: {}, Queue Size: {}, Completed Tasks: {}, Rejected Tasks: {}",
-//                            threadPoolExecutor.getActiveCount(),
-//                            threadPoolExecutor.getQueue().size(),
-//                            threadPoolExecutor.getCompletedTaskCount(),
-//                            threadPoolExecutor.getRejectedExecutionHandler().toString());
-//                } catch (InterruptedException e) {
-//                    logger.error("Error monitoring thread pool", e);
-//                }
-            }
-        }).start();
-    }
 }
