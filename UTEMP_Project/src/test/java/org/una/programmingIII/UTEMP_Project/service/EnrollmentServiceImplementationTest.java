@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +19,7 @@ import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.EnrollmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
+import org.una.programmingIII.UTEMP_Project.services.UserService;
 import org.una.programmingIII.UTEMP_Project.services.enrollment.EnrollmentServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
@@ -35,7 +38,13 @@ class EnrollmentServiceImplementationTest {
     private UserRepository userRepository;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private GenericMapper<Enrollment, EnrollmentDTO> enrollmentMapper;
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private EnrollmentServiceImplementation enrollmentService;
@@ -106,15 +115,21 @@ class EnrollmentServiceImplementationTest {
 
     @Test
     void testCreateEnrollment() {
+        Course course = mock(Course.class);
+        User student = mock(User.class);
+        enrollmentDTO.getCourse().setId(2L);
+        enrollmentDTO.getStudent().setId(3L);
         when(enrollmentMapper.convertToEntity(any(EnrollmentDTO.class))).thenReturn(enrollment);
-        when(courseRepository.findById(anyLong())).thenReturn(Optional.of(mock(Course.class)));
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(mock(User.class)));
+        when(courseRepository.findById(2L)).thenReturn(Optional.of(course));
+        when(userRepository.findById(3L)).thenReturn(Optional.of(student));
         when(enrollmentRepository.save(any(Enrollment.class))).thenReturn(enrollment);
         when(enrollmentMapper.convertToDTO(any(Enrollment.class))).thenReturn(enrollmentDTO);
 
         EnrollmentDTO result = enrollmentService.createEnrollment(enrollmentDTO);
 
         assertNotNull(result);
+        assertSame(course, enrollment.getCourse());
+        assertSame(student, enrollment.getStudent());
         verify(enrollmentRepository, times(1)).save(any(Enrollment.class));
     }
 
@@ -122,6 +137,7 @@ class EnrollmentServiceImplementationTest {
     void testUpdateEnrollment() {
         Long enrollmentId = 1L;
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(enrollment));
+        when(enrollmentRepository.save(enrollment)).thenReturn(enrollment);
         when(enrollmentMapper.convertToDTO(any(Enrollment.class))).thenReturn(enrollmentDTO);
 
         Optional<EnrollmentDTO> result = enrollmentService.updateEnrollment(enrollmentId, enrollmentDTO);
@@ -129,6 +145,7 @@ class EnrollmentServiceImplementationTest {
         assertTrue(result.isPresent());
         verify(enrollmentRepository, times(1)).findById(enrollmentId);
         verify(enrollmentRepository, times(1)).save(any(Enrollment.class));
+        verify(userService, times(1)).notifyUserAndProfessor(enrollment.getStudent(), enrollment.getCourse());
     }
 
     @Test

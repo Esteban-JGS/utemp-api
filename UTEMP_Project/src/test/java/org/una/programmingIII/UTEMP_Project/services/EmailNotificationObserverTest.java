@@ -1,6 +1,11 @@
 package org.una.programmingIII.UTEMP_Project.services;
 
+import jakarta.mail.Address;
+import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.Multipart;
+import jakarta.mail.Session;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,9 +14,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class EmailNotificationObserverTest {
@@ -22,7 +29,7 @@ class EmailNotificationObserverTest {
     @Mock
     private JavaMailSender mailSender;
 
-    @Mock
+    // Real message (no session, never transported) so the content written by MimeMessageHelper can be inspected
     private MimeMessage mimeMessage;
 
     @Spy
@@ -31,23 +38,26 @@ class EmailNotificationObserverTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        mimeMessage = new MimeMessage((Session) null);
     }
 
     @Test
-    void testUpdate_WhenValidEmail_ShouldSendEmail() throws MessagingException {
+    void testUpdate_WhenValidEmail_ShouldSendEmail() throws MessagingException, IOException {
         // Arrange
         String eventType = "USER_ENROLLED_QUE_TAL_BRO";
         String message = "Your enrollment is successful!";
         String mail = "estebangranados147@gmail.com";
 
-        MimeMessageHelper helperMock = mock(MimeMessageHelper.class);
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         emailNotificationObserver.update(eventType, message, mail);
 
         verify(mailSender, times(1)).send(mimeMessage);
-        verify(mimeMessage, times(1)).setSubject(anyString());
-        verify(mimeMessage, times(1)).setText(anyString());
+        assertEquals("Notification", mimeMessage.getSubject());
+        assertArrayEquals(new Address[]{new InternetAddress(mail)}, mimeMessage.getRecipients(Message.RecipientType.TO));
+        String body = findTextBody(mimeMessage.getContent());
+        assertNotNull(body);
+        assertTrue(body.contains("<p>" + message + "</p>"));
     }
 
     @Test
@@ -74,7 +84,23 @@ class EmailNotificationObserverTest {
         String htmlMessage = emailNotificationObserver.createHtmlMessage(eventType, message);
 
         // Assert
-        assert(htmlMessage.contains(eventType));
-        assert(htmlMessage.contains(message));
+        assertTrue(htmlMessage.startsWith("<html>"));
+        assertTrue(htmlMessage.endsWith("</html>"));
+        assertTrue(htmlMessage.contains("<p>" + message + "</p>"));
+    }
+
+    private static String findTextBody(Object content) throws MessagingException, IOException {
+        if (content instanceof String text) {
+            return text;
+        }
+        if (content instanceof Multipart multipart) {
+            for (int i = 0; i < multipart.getCount(); i++) {
+                String text = findTextBody(multipart.getBodyPart(i).getContent());
+                if (text != null) {
+                    return text;
+                }
+            }
+        }
+        return null;
     }
 }

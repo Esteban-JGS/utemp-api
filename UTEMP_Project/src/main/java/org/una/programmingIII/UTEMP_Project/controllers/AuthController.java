@@ -3,10 +3,8 @@ package org.una.programmingIII.UTEMP_Project.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,94 +13,87 @@ import org.springframework.web.bind.annotation.RestController;
 import org.una.programmingIII.UTEMP_Project.controllers.request.AuthRequest;
 import org.una.programmingIII.UTEMP_Project.controllers.responses.ApiResponse;
 import org.una.programmingIII.UTEMP_Project.controllers.responses.TokenResponse;
+import org.una.programmingIII.UTEMP_Project.dtos.TokenDTOs.TokenRequestDTO;
+import org.una.programmingIII.UTEMP_Project.dtos.TokenDTOs.TokenResponseDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.UserNotFoundException;
+import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
+import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetailsService;
-import org.una.programmingIII.UTEMP_Project.services.UserService;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/utemp/auth")
 public class AuthController {
 
+    private static final String TOKEN_TYPE = "Bearer";
+
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
     private final AuthenticationManager authenticationManager;
-    private final UserService userService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, CustomUserDetailsService userDetailsService, UserService userService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, CustomUserDetailsService userDetailsService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
-        this.userService = userService;
     }
 
     @Operation(
             summary = "Authenticate User",
-            description = "Validates user credentials and generates an access token."
+            description = "Validates user credentials and returns a short-lived access token and a refresh token."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Authentication successful. Returns JWT token and user details."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials. Authentication failed."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found.")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Authentication successful. Returns the tokens and user details."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials. Authentication failed.")
     })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResponse>> createAuthenticationToken(@Valid @RequestBody AuthRequest authRequest) {
-        try {
-            // Autenticar al usuario
-            authenticate(authRequest);
-            // Obtener detalles del usuario autenticado
-            CustomUserDetails userDetails = loadUserDetails(authRequest.getIdentificationNumber());
-            // Generar el token JWT
-            String jwt = jwtTokenProvider.generateAccessToken(userDetails.getUser());
-            // Obtener los detalles del usuario asociados al ID del token
-            UserDTO user = getUserById(jwtTokenProvider.getIdFromToken(jwt));
-
-            // Construir la respuesta de token
-            TokenResponse tokenResponse = buildTokenResponse(jwt, user);
-            ApiResponse<TokenResponse> response = new ApiResponse<>();
-            response.setData(tokenResponse);
-            return ResponseEntity.ok(response);
-
-        } catch (BadCredentialsException | UserNotFoundException e) {
-            return buildErrorResponse(HttpStatus.NOT_FOUND, "No encontrado");
-        } catch (Exception e) {
-            return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno");
-        }
-    }
-
-    // Métodos auxiliares para mejorar la legibilidad
-
-    private void authenticate(AuthRequest authRequest) {
+        // Bad credentials raise an AuthenticationException, which GlobalExceptionHandler turns into a 401
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.getIdentificationNumber(), authRequest.getPassword())
         );
-    }
 
-    private CustomUserDetails loadUserDetails(String username) {
-        return (CustomUserDetails) userDetailsService.loadUserByUsername(username);
-    }
+        CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(authRequest.getIdentificationNumber());
+        User user = userDetails.getUser();
 
-    private UserDTO getUserById(Long id) {
-        return userService.getUserById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-    }
-
-    private TokenResponse buildTokenResponse(String jwt, UserDTO user) {
-        return TokenResponse.builder()
-                .token(jwt)
-                .tokenType("Bearer")
-                .user(user)
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .token(jwtTokenProvider.generateAccessToken(user))
+                .refreshToken(jwtTokenProvider.generateRefreshToken(user))
+                .tokenType(TOKEN_TYPE)
+                .expiresIn(jwtTokenProvider.getAccessTokenValidity() / 1000)
+                .user(toSummary(user))
                 .build();
+        return ResponseEntity.ok(new ApiResponse<>(tokenResponse));
     }
 
-    private ResponseEntity<ApiResponse<TokenResponse>> buildErrorResponse(HttpStatus status, String message) {
-        ApiResponse<TokenResponse> errorResponse = new ApiResponse<>();
-        errorResponse.setStatusCode(status.value());
-        errorResponse.setMessage(message);
-        return ResponseEntity.status(status).body(errorResponse);
+    @Operation(
+            summary = "Refresh tokens",
+            description = "Exchanges a valid refresh token for a new access token and a new refresh token."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "New tokens issued."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "The refresh token is invalid or expired.")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<TokenResponseDTO>> refreshToken(@RequestBody TokenRequestDTO request) {
+        if (request == null || request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new InvalidTokenException("Refresh token is required.");
+        }
+        return ResponseEntity.ok(new ApiResponse<>(jwtTokenProvider.refreshTokens(request.getRefreshToken())));
+    }
+
+    // Only the fields the client needs after login; mapping the whole entity graph (courses, enrollments...) is not needed here
+    private UserDTO toSummary(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .identificationNumber(user.getIdentificationNumber())
+                .role(user.getRole())
+                .state(user.getState())
+                .permissions(user.getPermissions())
+                .createdAt(user.getCreatedAt())
+                .lastUpdate(user.getLastUpdate())
+                .build();
     }
 }

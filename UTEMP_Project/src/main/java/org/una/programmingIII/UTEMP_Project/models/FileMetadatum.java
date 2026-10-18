@@ -23,7 +23,7 @@ public class FileMetadatum implements Identifiable {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignment_id")
+    @JoinColumn(name = "submission_id")
     @Builder.Default
     private Submission submission = new Submission();
 
@@ -57,8 +57,9 @@ public class FileMetadatum implements Identifiable {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.lastUpdate = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.lastUpdate = now;
     }
 
     @PreUpdate

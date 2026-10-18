@@ -7,11 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
+import org.una.programmingIII.UTEMP_Project.models.Submission;
 import org.una.programmingIII.UTEMP_Project.repositories.GradeRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.services.grade.GradeServiceImplementation;
@@ -40,7 +41,7 @@ public class GradeServiceImplementationTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        gradeService = new GradeServiceImplementation(gradeRepository, submissionRepository, new GenericMapperFactory());
+        gradeService = new GradeServiceImplementation(gradeRepository, submissionRepository, new MockMapperFactory(this));
     }
 
     @Test
@@ -81,9 +82,13 @@ public class GradeServiceImplementationTest {
         GradeDTO gradeDTO = new GradeDTO();
         gradeDTO.setGrade(85.0);
         gradeDTO.setComments("Good work");
+        gradeDTO.getSubmission().setId(1L);
 
         Grade grade = new Grade();
+        Submission submission = new Submission();
+        submission.setId(1L);
         when(gradeMapper.convertToEntity(gradeDTO)).thenReturn(grade);
+        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
         when(gradeRepository.save(grade)).thenReturn(grade);
         when(gradeMapper.convertToDTO(grade)).thenReturn(gradeDTO);
 
@@ -91,6 +96,7 @@ public class GradeServiceImplementationTest {
 
         assertNotNull(result);
         assertEquals(85, result.getGrade());
+        assertSame(submission, grade.getSubmission());
     }
 
     @Test
@@ -151,16 +157,16 @@ public class GradeServiceImplementationTest {
         when(gradeRepository.findById(gradeId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> gradeService.getGradeById(gradeId));
-        assertEquals("Grade not found", thrown.getMessage());
+        assertEquals("Grade not found with id: 1", thrown.getMessage());
     }
 
     @Test
     public void testGetAllGradesWithDatabaseError() {
         Pageable pageable = PageRequest.of(0, 10);
 
-        when(gradeRepository.findAll(pageable)).thenThrow(DataAccessException.class);
+        when(gradeRepository.findAll(pageable)).thenThrow(new DataAccessResourceFailureException("Database unavailable"));
 
         InvalidDataException thrown = assertThrows(InvalidDataException.class, () -> gradeService.getAllGrades(pageable));
-        assertEquals("Error fetching grades from the database", thrown.getMessage());
+        assertEquals("Invalid data: Error fetching grades from the database", thrown.getMessage());
     }
 }

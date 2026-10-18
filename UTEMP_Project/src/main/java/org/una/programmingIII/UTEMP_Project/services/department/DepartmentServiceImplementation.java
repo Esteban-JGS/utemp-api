@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.department;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -65,6 +66,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all departments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching departments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all departments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching departments");
@@ -81,6 +84,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
             }, "Error fetching department by ID");
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while fetching department ID {}: {}", id, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while fetching department ID {}: {}", id, e.getMessage());
@@ -101,6 +106,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
             throw e;
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for creating department: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while creating department: {}", e.getMessage());
@@ -125,6 +132,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for updating department: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while updating department: {}", e.getMessage());
             throw new RuntimeException("An unexpected error occurred while updating the department.", e);
@@ -143,6 +152,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while deleting department: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while deleting department: {}", e.getMessage());
             throw new RuntimeException("An unexpected error occurred while deleting the department.", e);
@@ -160,6 +171,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching departments for faculty ID {}: {}", facultyId, e.getMessage());
             throw new InvalidDataException("Error fetching departments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching departments for faculty ID {}: {}", facultyId, e.getMessage());
             throw new InvalidDataException("Error fetching departments");
@@ -183,6 +196,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while adding course to department: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while adding course to department: {}", e.getMessage());
             throw new RuntimeException("An unexpected error occurred while adding the course to the department.", e);
@@ -204,10 +219,12 @@ public class DepartmentServiceImplementation implements DepartmentService {
                     return null;
                 }, "Error removing course from department");
             } else {
-                throw new ResourceNotFoundException("Course not found in this department", courseId);
+                throw new ResourceNotFoundException("Course in this department", courseId);
             }
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while removing course from department: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while removing course from department: {}", e.getMessage());
@@ -235,6 +252,8 @@ public class DepartmentServiceImplementation implements DepartmentService {
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);

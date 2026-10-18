@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.hibernate.service.spi.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.una.programmingIII.UTEMP_Project.dtos.NotificationDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Notification;
 import org.una.programmingIII.UTEMP_Project.models.NotificationStatus;
@@ -40,7 +40,9 @@ public class NotificationServiceTest {
     @Mock
     private GenericMapper<Notification, NotificationDTO> notificationMapper;
 
-    @InjectMocks
+    @Mock
+    private GenericMapper<User, UserDTO> userMapper;
+
     private NotificationServiceImplementation notificationService;
 
     private Notification notification;
@@ -50,7 +52,7 @@ public class NotificationServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        notificationService = new NotificationServiceImplementation(notificationRepository, userRepository, new GenericMapperFactory());
+        notificationService = new NotificationServiceImplementation(notificationRepository, userRepository, new MockMapperFactory(this));
 
         user = new User();
         user.setId(1L);
@@ -64,7 +66,9 @@ public class NotificationServiceTest {
         notificationDTO.setId(1L);
         notificationDTO.setMessage("Test Message");
         notificationDTO.setStatus(NotificationStatus.UNREAD);
-        notificationDTO.setUser(new UserDTO());
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(1L);
+        notificationDTO.setUser(userDTO);
     }
 
     @Test
@@ -153,6 +157,7 @@ public class NotificationServiceTest {
 
     @Test
     public void testRemoveNotificationFromUser() {
+        user.getNotifications().add(notification);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(notificationRepository.findById(1L)).thenReturn(Optional.of(notification));
         doNothing().when(notificationRepository).delete(notification);
@@ -160,6 +165,7 @@ public class NotificationServiceTest {
         notificationService.removeNotificationFromUser(1L, 1L);
 
         verify(notificationRepository, times(1)).delete(notification);
+        assertTrue(user.getNotifications().isEmpty());
     }
 
     @Test
@@ -173,11 +179,19 @@ public class NotificationServiceTest {
 
     @Test
     public void testSendNotificationToUser() {
+        UserDTO userDTO = notificationDTO.getUser();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userMapper.convertToDTO(user)).thenReturn(userDTO);
+        when(notificationMapper.convertToEntity(any(NotificationDTO.class))).thenReturn(notification);
         when(notificationRepository.save(any(Notification.class))).thenReturn(notification);
 
         notificationService.sendNotificationToUser(1L, "Test Message");
 
+        ArgumentCaptor<NotificationDTO> dtoCaptor = ArgumentCaptor.forClass(NotificationDTO.class);
+        verify(notificationMapper).convertToEntity(dtoCaptor.capture());
+        assertEquals("Test Message", dtoCaptor.getValue().getMessage());
+        assertEquals(NotificationStatus.UNREAD, dtoCaptor.getValue().getStatus());
+        assertSame(userDTO, dtoCaptor.getValue().getUser());
         verify(notificationRepository, times(1)).save(any(Notification.class));
     }
 
@@ -190,9 +204,15 @@ public class NotificationServiceTest {
 
     @Test
     public void testCreateNotificationWithException() {
-        when(notificationRepository.save(any(Notification.class))).thenThrow(new DataAccessException("Database error") {});
+        DataAccessException databaseError = new DataAccessException("Database error") {};
+        when(notificationMapper.convertToEntity(notificationDTO)).thenReturn(notification);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(notificationRepository.save(any(Notification.class))).thenThrow(databaseError);
 
-        assertThrows(InvalidDataException.class, () -> notificationService.createNotification(notificationDTO));
+        ServiceException thrown = assertThrows(ServiceException.class, () -> notificationService.createNotification(notificationDTO));
+
+        assertEquals("Error creating notification", thrown.getMessage());
+        assertSame(databaseError, thrown.getCause());
     }
 
     @Test

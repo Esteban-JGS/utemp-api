@@ -62,6 +62,8 @@ class NotificationTest {
     @Test
     void testOnUpdate() {
         notification.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        notification.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = notification.getLastUpdate();
 
 

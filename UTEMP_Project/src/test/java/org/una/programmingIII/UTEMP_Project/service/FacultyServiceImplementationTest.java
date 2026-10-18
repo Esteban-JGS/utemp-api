@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -37,6 +39,12 @@ class FacultyServiceImplementationTest {
     @Mock
     private GenericMapper<Faculty, FacultyDTO> facultyMapper;
 
+    @Mock
+    private GenericMapper<Department, DepartmentDTO> departmentMapper;
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
+
     @InjectMocks
     private FacultyServiceImplementation facultyService;
 
@@ -72,6 +80,7 @@ class FacultyServiceImplementationTest {
 
     @Test
     void testCreateFaculty_Success() {
+        facultyDTO.getUniversity().setId(1L);
         when(facultyRepository.save(any(Faculty.class))).thenReturn(faculty);
         when(universityRepository.findById(anyLong())).thenReturn(Optional.of(mock(University.class)));
 
@@ -86,9 +95,16 @@ class FacultyServiceImplementationTest {
     void testUpdateFaculty_Success() {
         when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
         when(facultyRepository.save(any(Faculty.class))).thenReturn(faculty);
+        when(universityRepository.findById(1L)).thenReturn(Optional.of(mock(University.class)));
+        when(facultyMapper.convertToDTO(any(Faculty.class))).thenAnswer(invocation -> {
+            FacultyDTO dto = new FacultyDTO();
+            dto.setName(invocation.<Faculty>getArgument(0).getName());
+            return dto;
+        });
 
         FacultyDTO updatedFacultyDTO = new FacultyDTO();
         updatedFacultyDTO.setName("New Engineering");
+        updatedFacultyDTO.getUniversity().setId(1L);
 
         Optional<FacultyDTO> result = facultyService.updateFaculty(1L, updatedFacultyDTO);
 
@@ -119,12 +135,16 @@ class FacultyServiceImplementationTest {
 
     @Test
     void testAddDepartmentToFaculty_Success() {
+        Department department = new Department();
         when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
-        when(departmentRepository.save(any(Department.class))).thenReturn(mock(Department.class));
+        when(departmentMapper.convertToEntity(any(DepartmentDTO.class))).thenReturn(department);
+        when(departmentRepository.save(any(Department.class))).thenReturn(department);
 
         facultyService.addDepartmentToFaculty(1L, mock(DepartmentDTO.class));
 
-        verify(departmentRepository, times(1)).save(any(Department.class));
+        assertSame(faculty, department.getFaculty());
+        assertTrue(faculty.getDepartments().contains(department));
+        verify(departmentRepository, times(1)).save(department);
     }
 
     @Test

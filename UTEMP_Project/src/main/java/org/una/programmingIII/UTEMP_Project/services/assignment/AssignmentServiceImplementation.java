@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.assignment;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -77,6 +78,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all assignments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching assignments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all assignments: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all assignments");
@@ -97,6 +100,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching assignment by ID {}: {}", id, e.getMessage());
             throw new InvalidDataException("Error accessing assignment data");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching assignment by ID {}: {}", id, e.getMessage());
             throw new InvalidDataException("Error fetching assignment by ID");
@@ -121,6 +126,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 throw e;
             } catch (InvalidDataException e) {
                 logger.error("Error creating assignment: Invalid data provided - {}", e.getMessage());
+                throw e;
+            } catch (DomainException e) {
                 throw e;
             } catch (Exception e) {
                 logger.error("Unexpected error creating assignment: {}", e.getMessage());
@@ -147,6 +154,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             } catch (InvalidDataException e) {
                 logger.error("Error updating assignment: Invalid data provided - {}", e.getMessage());
                 throw e;
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Unexpected error updating assignment: {}", e.getMessage());
                 throw new RuntimeException("An unexpected error occurred while updating the assignment", e);
@@ -166,6 +175,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             } catch (ResourceNotFoundException e) {
                 logger.error("Error deleting assignment: Assignment with ID {} not found", id);
                 throw e;
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Unexpected error deleting assignment: {}", e.getMessage());
                 throw new RuntimeException("An unexpected error occurred while deleting the assignment", e);
@@ -184,6 +195,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching assignments for course ID {}: {}", courseId, e.getMessage());
             throw new InvalidDataException("Error fetching assignments from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching assignments for course ID {}: {}", courseId, e.getMessage());
             throw new InvalidDataException("Error fetching assignments by course ID");
@@ -213,6 +226,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             } catch (InvalidDataException e) {
                 logger.error("Invalid submission data: {}", e.getMessage());
                 throw e;
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Unexpected error adding submission: {}", e.getMessage());
                 throw new RuntimeException("An unexpected error occurred while adding the submission", e);
@@ -227,7 +242,7 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         Submission submission = getEntityById(submissionId, submissionRepository, "Submission");
 
         if (!assignment.getSubmissions().contains(submission)) {
-            throw new ResourceNotFoundException("Submission not found in this assignment", submissionId);
+            throw new ResourceNotFoundException("Submission in this assignment", submissionId);
         }
 
         executeWithLogging(() -> {
@@ -237,6 +252,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 return null;
             } catch (ResourceNotFoundException e) {
                 logger.error("Error deleting submission: Submission with ID {} not found", submissionId);
+                throw e;
+            } catch (DomainException e) {
                 throw e;
             } catch (Exception e) {
                 logger.error("Unexpected error deleting submission: {}", e.getMessage());
@@ -270,6 +287,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         } catch (ResourceNotFoundException e) {
             logger.warn("{}: {}", errorMessage, e.getMessage());
             throw e;
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);
@@ -285,6 +304,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             notifyObservers("USER_SUBMISSION", message, assignment.getCourse().getTeacher().getEmail());
             notificationService.sendNotificationToUser(assignment.getCourse().getTeacher().getId(), message);
             logger.info("Notification sent to teacher {} for submission ID: {}", assignment.getCourse().getTeacher().getEmail(), submission.getId());
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error notifying teacher {}: {}", assignment.getCourse().getTeacher().getEmail(), e.getMessage());
         }

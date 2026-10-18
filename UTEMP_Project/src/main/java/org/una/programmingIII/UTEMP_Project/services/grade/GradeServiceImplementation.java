@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.grade;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -57,6 +58,8 @@ public class GradeServiceImplementation implements GradeService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all grades: {}", e.getMessage());
             throw new InvalidDataException("Error fetching grades from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all grades: {}", e.getMessage());
             throw new InvalidDataException("Error fetching grades");
@@ -73,6 +76,8 @@ public class GradeServiceImplementation implements GradeService {
             }, "Error fetching grade by ID");
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to fetch grade: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error fetching grade by ID: {}", e.getMessage());
@@ -91,6 +96,8 @@ public class GradeServiceImplementation implements GradeService {
                     "Error creating grade");
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to create grade: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error creating grade: {}", e.getMessage());
@@ -112,6 +119,8 @@ public class GradeServiceImplementation implements GradeService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to update grade: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error updating grade: {}", e.getMessage());
             throw new ServiceException("Error updating grade", e);
@@ -131,6 +140,8 @@ public class GradeServiceImplementation implements GradeService {
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to delete grade: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error deleting grade: {}", e.getMessage());
             throw new ServiceException("Error deleting grade", e);
@@ -148,6 +159,8 @@ public class GradeServiceImplementation implements GradeService {
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching grades for submission ID {}: {}", submissionId, e.getMessage());
             throw new InvalidDataException("Error fetching grades from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching grades for submission ID {}: {}", submissionId, e.getMessage());
             throw new InvalidDataException("Error fetching grades by submission ID");
@@ -176,6 +189,8 @@ public class GradeServiceImplementation implements GradeService {
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);

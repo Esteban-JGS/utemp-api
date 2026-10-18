@@ -88,6 +88,8 @@ class FileMetadatumTest {
     @Test
     void testLastUpdateOnUpdate() {
         fileMetadatum.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        fileMetadatum.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = fileMetadatum.getLastUpdate();
 
 

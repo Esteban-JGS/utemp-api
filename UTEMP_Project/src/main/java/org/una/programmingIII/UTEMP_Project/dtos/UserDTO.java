@@ -1,6 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -36,6 +37,8 @@ public class UserDTO {
     @NotNull(message = "Password must not be null")
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @Size(max = 128, message = "Password must be at most 128 characters long")
+    // Accepted on create/update requests but never serialized in responses
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Size(max = 50, message = "Identification number must be at most 50 characters long")

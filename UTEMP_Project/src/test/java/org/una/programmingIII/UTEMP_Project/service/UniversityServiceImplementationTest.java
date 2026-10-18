@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -13,9 +15,11 @@ import org.una.programmingIII.UTEMP_Project.repositories.UniversityRepository;
 import org.una.programmingIII.UTEMP_Project.services.university.UniversityServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
@@ -37,6 +41,9 @@ class UniversityServiceImplementationTest {
 
     @Mock
     private Pageable pageable;
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private UniversityServiceImplementation universityService;
@@ -98,18 +105,23 @@ class UniversityServiceImplementationTest {
     void testGetUniversityById_NotFound() {
         when(universityRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> universityService.getUniversityById(1L));
+        Optional<UniversityDTO> result = universityService.getUniversityById(1L);
+
+        assertTrue(result.isEmpty());
+        verify(universityRepository, times(1)).findById(1L);
     }
 
     @Test
     void testGetAllUniversities() {
-        Page<University> universityPage = mock(Page.class);
+        Page<University> universityPage = new PageImpl<>(List.of(university));
         when(universityRepository.findAll(pageable)).thenReturn(universityPage);
-        when(universityPage.map(universityMapper::convertToDTO)).thenReturn(mock(Page.class));
+        when(universityMapper.convertToDTO(university)).thenReturn(universityDTO);
 
         Page<UniversityDTO> result = universityService.getAllUniversities(pageable);
 
         assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Test University", result.getContent().get(0).getName());
         verify(universityRepository, times(1)).findAll(pageable);
     }
 

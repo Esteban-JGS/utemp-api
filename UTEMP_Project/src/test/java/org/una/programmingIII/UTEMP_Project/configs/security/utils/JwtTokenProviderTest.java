@@ -1,11 +1,11 @@
 package org.una.programmingIII.UTEMP_Project.configs.security.utils;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.WeakKeyException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.una.programmingIII.UTEMP_Project.dtos.TokenDTOs.TokenResponseDTO;
@@ -16,6 +16,7 @@ import org.una.programmingIII.UTEMP_Project.models.UserPermission;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,20 +29,20 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class JwtTokenProviderTest {
 
-    @InjectMocks
-    private JwtTokenProvider jwtTokenProvider;
+    private static final String SECRET = "test-secret-key-that-is-at-least-32-bytes-long";
+    private static final long ACCESS_TOKEN_VALIDITY = 3600000; // 1 hour
+    private static final long REFRESH_TOKEN_VALIDITY = 86400000; // 1 day
 
     @Mock
     private UserRepository userRepository;
 
-    private String secretKey = "secretKey";
-    private long accessTokenValidity = 3600000; // 1 hour
-    private long refreshTokenValidity = 86400000; // 1 day
-
+    private JwtTokenProvider jwtTokenProvider;
     private User testUser;
 
     @BeforeEach
     void setUp() {
+        jwtTokenProvider = new JwtTokenProvider(userRepository, SECRET, ACCESS_TOKEN_VALIDITY, REFRESH_TOKEN_VALIDITY);
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setIdentificationNumber("000000000");
@@ -50,10 +51,12 @@ class JwtTokenProviderTest {
         List<UserPermission> permissions = new ArrayList<>();
         permissions.add(UserPermission.MANAGE_USERS);
         testUser.setPermissions(permissions);
+    }
 
-        jwtTokenProvider.setSecretKey(secretKey);
-        jwtTokenProvider.setAccessTokenValidity(accessTokenValidity);
-        jwtTokenProvider.setRefreshTokenValidity(refreshTokenValidity);
+    @Test
+    void testWeakSecretIsRejectedAtStartup() {
+        assertThrows(WeakKeyException.class,
+                () -> new JwtTokenProvider(userRepository, "mySuperSecretKey12345", ACCESS_TOKEN_VALIDITY, REFRESH_TOKEN_VALIDITY));
     }
 
     @Test
@@ -62,9 +65,8 @@ class JwtTokenProviderTest {
 
         when(userRepository.findById(testUser.getId())).thenReturn(Optional.empty());
 
-        InvalidTokenException exception = assertThrows(InvalidTokenException.class, () -> {
-            jwtTokenProvider.refreshTokens(refreshToken);
-        });
+        InvalidTokenException exception = assertThrows(InvalidTokenException.class,
+                () -> jwtTokenProvider.refreshTokens(refreshToken));
 
         assertEquals("User not found for the given ID: " + testUser.getId(), exception.getMessage());
         verify(userRepository).findById(testUser.getId());
@@ -79,54 +81,59 @@ class JwtTokenProviderTest {
         TokenResponseDTO tokenResponse = jwtTokenProvider.refreshTokens(refreshToken);
 
         assertNotNull(tokenResponse);
-        assertNotNull(tokenResponse.getAccessToken());
-        assertNotNull(tokenResponse.getRefreshToken());
-
         assertTrue(jwtTokenProvider.validateToken(tokenResponse.getAccessToken(), testUser.getIdentificationNumber()));
-        assertTrue(jwtTokenProvider.validateToken(tokenResponse.getRefreshToken(), testUser.getIdentificationNumber()));
+        assertNotNull(tokenResponse.getRefreshToken());
     }
 
     @Test
-    void testGenerateToken() {
+    void testAccessTokenCannotBeUsedAsRefreshToken() {
         String accessToken = jwtTokenProvider.generateAccessToken(testUser);
-        assertNotNull(accessToken);
 
+        assertThrows(InvalidTokenException.class, () -> jwtTokenProvider.refreshTokens(accessToken));
+    }
+
+    @Test
+    void testRefreshTokenCannotBeUsedAsAccessToken() {
         String refreshToken = jwtTokenProvider.generateRefreshToken(testUser);
-        assertNotNull(refreshToken);
+
+        assertFalse(jwtTokenProvider.validateToken(refreshToken, testUser.getIdentificationNumber()));
     }
 
     @Test
     void testValidateToken() {
         String token = jwtTokenProvider.generateAccessToken(testUser);
+
         assertTrue(jwtTokenProvider.validateToken(token, testUser.getIdentificationNumber()));
+        assertFalse(jwtTokenProvider.validateToken(token, "someone-else"));
+        assertEquals(testUser.getId(), jwtTokenProvider.getIdFromToken(token));
+        assertEquals(testUser.getPermissions(), jwtTokenProvider.getPermissionsFromToken(token));
     }
 
     @Test
-    void testValidateTokenExpired() {
-        String token = jwtTokenProvider.generateAccessToken(testUser);
+    void testTokenSignedWithAnotherKeyIsRejected() {
+        String forgedToken = Jwts.builder()
+                .subject(testUser.getIdentificationNumber())
+                .claim("type", "access")
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY))
+                .signWith(Keys.hmacShaKeyFor("another-secret-key-that-is-32-bytes-or-more".getBytes(StandardCharsets.UTF_8)))
+                .compact();
 
+        assertThrows(InvalidTokenException.class,
+                () -> jwtTokenProvider.validateToken(forgedToken, testUser.getIdentificationNumber()));
+    }
+
+    @Test
+    void testExpiredTokenIsRejected() {
         String expiredToken = Jwts.builder()
-                .setSubject(testUser.getIdentificationNumber())
-                .setIssuedAt(new Date(System.currentTimeMillis() - 100000))
-                .setExpiration(new Date(System.currentTimeMillis() - 1000))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .subject(testUser.getIdentificationNumber())
+                .claim("type", "refresh")
+                .claim("id", testUser.getId())
+                .issuedAt(new Date(System.currentTimeMillis() - 600000))
+                .expiration(new Date(System.currentTimeMillis() - 300000))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 
-        assertFalse(jwtTokenProvider.validateToken(expiredToken, testUser.getIdentificationNumber()));
-    }
-
-    @Test
-    void testRefreshTokensExpired() {
-        String expiredRefreshToken = Jwts.builder()
-                .setSubject(testUser.getIdentificationNumber())
-                .setIssuedAt(new Date(System.currentTimeMillis() - 100000))
-                .setExpiration(new Date(System.currentTimeMillis() - 1000))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
-
-        Exception exception = assertThrows(TokenExpiredException.class, () -> {
-            jwtTokenProvider.refreshTokens(expiredRefreshToken);
-        });
-        assertEquals("Refresh token has expired.", exception.getMessage());
+        assertTrue(jwtTokenProvider.isTokenExpired(expiredToken));
+        assertThrows(TokenExpiredException.class, () -> jwtTokenProvider.refreshTokens(expiredToken));
     }
 }

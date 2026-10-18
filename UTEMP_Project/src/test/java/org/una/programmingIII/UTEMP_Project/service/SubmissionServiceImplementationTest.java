@@ -1,5 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.service;
 
+import org.mockito.Spy;
+import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,20 +11,31 @@ import org.mockito.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
+import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
+import org.una.programmingIII.UTEMP_Project.models.Assignment;
+import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.FileMetadatum;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
 import org.una.programmingIII.UTEMP_Project.models.Submission;
+import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.*;
+import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.services.submission.SubmissionServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
+import java.util.List;
 import java.util.Optional;
 
 public class SubmissionServiceImplementationTest {
+
+    @Spy
+    private GenericMapperFactory mapperFactory = new MockMapperFactory(this);
 
     @InjectMocks
     private SubmissionServiceImplementation submissionService;
@@ -40,6 +53,12 @@ public class SubmissionServiceImplementationTest {
     private GradeRepository gradeRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private GenericMapper<Submission, SubmissionDTO> submissionMapper;
 
     @Mock
@@ -52,18 +71,41 @@ public class SubmissionServiceImplementationTest {
     private SubmissionDTO submissionDTO;
     private FileMetadatumDTO fileMetadatumDTO;
     private GradeDTO gradeDTO;
+    private User student;
+    private Assignment assignment;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
+        User teacher = new User();
+        teacher.setId(3L);
+        teacher.setEmail("teacher@example.com");
+        Course course = new Course();
+        course.setTeacher(teacher);
+        assignment = new Assignment();
+        assignment.setId(1L);
+        assignment.setTitle("Homework");
+        assignment.setCourse(course);
+        student = new User();
+        student.setId(2L);
+        student.setName("Student");
+
         submission = new Submission();
         submission.setId(1L);
         submission.setFileName("testFile");
+        submission.setStudent(student);
+        submission.setAssignment(assignment);
 
+        UserDTO studentDTO = new UserDTO();
+        studentDTO.setId(2L);
+        AssignmentDTO assignmentDTO = new AssignmentDTO();
+        assignmentDTO.setId(1L);
         submissionDTO = new SubmissionDTO();
         submissionDTO.setId(1L);
         submissionDTO.setFileName("testFile");
+        submissionDTO.setStudent(studentDTO);
+        submissionDTO.setAssignment(assignmentDTO);
 
         fileMetadatumDTO = new FileMetadatumDTO();
         fileMetadatumDTO.setId(1L);
@@ -76,13 +118,12 @@ public class SubmissionServiceImplementationTest {
     @Test
     public void testGetAllSubmissions() {
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Submission> submissionPage = mock(Page.class);
-        when(submissionRepository.findAll(pageable)).thenReturn(submissionPage);
-        when(submissionPage.map(submissionMapper::convertToDTO)).thenReturn(null);  // Mock map
+        when(submissionRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(submission)));
+        when(submissionMapper.convertToDTO(submission)).thenReturn(submissionDTO);
 
         Page<SubmissionDTO> result = submissionService.getAllSubmissions(pageable);
 
-        assertNotNull(result);
+        assertEquals(List.of(submissionDTO), result.getContent());
         verify(submissionRepository, times(1)).findAll(pageable);
     }
 
@@ -107,7 +148,8 @@ public class SubmissionServiceImplementationTest {
     @Test
     public void testCreateSubmission() {
         when(submissionMapper.convertToEntity(submissionDTO)).thenReturn(submission);
-        when(assignmentRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
         when(submissionRepository.save(submission)).thenReturn(submission);
         when(submissionMapper.convertToDTO(submission)).thenReturn(submissionDTO);
 
@@ -119,9 +161,12 @@ public class SubmissionServiceImplementationTest {
 
     @Test
     public void testCreateSubmissionAssignmentNotFound() {
-        when(assignmentRepository.existsById(1L)).thenReturn(false);
+        when(submissionMapper.convertToEntity(submissionDTO)).thenReturn(submission);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(assignmentRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> submissionService.createSubmission(submissionDTO));
+        verify(submissionRepository, never()).save(any());
     }
 
     @Test
@@ -189,8 +234,10 @@ public class SubmissionServiceImplementationTest {
 
     @Test
     public void testRemoveFileMetadatumFromSubmission() {
+        FileMetadatum file = new FileMetadatum();
+        submission.getFileMetadata().add(file);
         when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
-        when(fileMetadatumRepository.findById(1L)).thenReturn(Optional.of(new FileMetadatum()));
+        when(fileMetadatumRepository.findById(1L)).thenReturn(Optional.of(file));
 
         submissionService.removeFileMetadatumFromSubmission(1L, 1L);
 
@@ -199,8 +246,10 @@ public class SubmissionServiceImplementationTest {
 
     @Test
     public void testRemoveGradeFromSubmission() {
+        Grade grade = new Grade();
+        submission.getGrades().add(grade);
         when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
-        when(gradeRepository.findById(1L)).thenReturn(Optional.of(new Grade()));
+        when(gradeRepository.findById(1L)).thenReturn(Optional.of(grade));
 
         submissionService.removeGradeFromSubmission(1L, 1L);
 

@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.CourseDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.EnrollmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
-import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.UserRole;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.UserService;
@@ -80,17 +78,12 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long authenticatedUserId = ((CustomUserDetails) authentication.getPrincipal()).getUser().getId();
 
-        try {
-            Optional<UserDTO> userDTO = userService.getUserById(authenticatedUserId);
-            return userDTO.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("Current user not found");
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving current user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<UserDTO> userDTO = userService.getUserById(authenticatedUserId);
+        return userDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("Current user not found");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                });
     }
 
     @Operation(
@@ -119,17 +112,11 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<UserDTO>> getAllUsers(@PageableDefault Pageable pageable) {
         logger.info("Fetching all users with pagination");
-        try {
 
-            Page<UserDTO> usersDTO = userService.getAllUsers(pageable); // Cambiar a Page<User>
-            PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
+        Page<UserDTO> usersDTO = userService.getAllUsers(pageable); // Cambiar a Page<User>
+        PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
 
-            return ResponseEntity.ok(userDTOPage);
-        } catch (Exception e) {
-            logger.error("Error fetching all users: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
+        return ResponseEntity.ok(userDTOPage);
     }
 
     @Operation(
@@ -158,17 +145,11 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<PageDTO<UserDTO>> getAllUsersByRole(@PathVariable UserRole role, @PageableDefault Pageable pageable) {
         logger.info("Fetching all users by role with pagination");
-        try {
 
-            Page<UserDTO> usersDTO = userService.getAllUsersByRole(role, pageable); // Cambiar a Page<User>
-            PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
+        Page<UserDTO> usersDTO = userService.getAllUsersByRole(role, pageable); // Cambiar a Page<User>
+        PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
 
-            return ResponseEntity.ok(userDTOPage);
-        } catch (Exception e) {
-            logger.error("Error fetching all users by role: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
+        return ResponseEntity.ok(userDTOPage);
     }
 
     @Operation(
@@ -213,20 +194,12 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserDTO> getUserById(
             @Parameter(description = "ID of the user to retrieve") @PathVariable Long id) {
-        try {
-            Optional<UserDTO> userDTO = userService.getUserById(id);
-            return userDTO.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("User with ID {} not found", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    });
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data error while retrieving user by ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Error retrieving user by ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<UserDTO> userDTO = userService.getUserById(id);
+        return userDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("User with ID {} not found", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                });
     }
 
     @Operation(
@@ -263,17 +236,12 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserDTO> getUserByIdentificationNumber(
             @Parameter(description = "Identification number of the user") @PathVariable String identificationNumber) {
-        try {
-            Optional<UserDTO> userDTO = userService.getUserByIdentificationNumber(identificationNumber);
-            return userDTO.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("User with identification number {} not found", identificationNumber);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving user by identification number {}: {}", identificationNumber, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<UserDTO> userDTO = userService.getUserByIdentificationNumber(identificationNumber);
+        return userDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("User with identification number {} not found", identificationNumber);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                });
     }
 
     @Operation(
@@ -310,17 +278,12 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserDTO> getUserByRole(
             @Parameter(description = "Identification number of the user") @PathVariable UserRole role) {
-        try {
-            Optional<UserDTO> userDTO = userService.getUserByRole(role);
-            return userDTO.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("User with role {} not found", role);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    });
-        } catch (Exception e) {
-            logger.error("Error retrieving user by role {}: {}", role, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<UserDTO> userDTO = userService.getUserByRole(role);
+        return userDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("User with role {} not found", role);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                });
     }
 
     @Operation(
@@ -356,18 +319,8 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO userDTO) {
-        try {
-            UserDTO createdUser = userService.createUser(userDTO);
-            return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-        } catch (InvalidDataException e) {
-            logger.error("1Error creating user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
-        } catch (Exception e) {
-            logger.error("Error creating user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
+        UserDTO createdUser = userService.createUser(userDTO);
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     @Operation(
@@ -412,22 +365,12 @@ public class UserController {
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id,
                                               @Valid @RequestBody UserDTO userDTO) {
-        try {
-            Optional<UserDTO> updatedUser = userService.updateUser(id, userDTO);
-            return updatedUser.map(ResponseEntity::ok)
-                    .orElseGet(() -> {
-                        logger.warn("User with ID {} not found for update", id);
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                    });
-        } catch (InvalidDataException e) {
-            logger.error("2Error updating user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(null);
-        } catch (Exception e) {
-            logger.error("Error updating user: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
+        Optional<UserDTO> updatedUser = userService.updateUser(id, userDTO);
+        return updatedUser.map(ResponseEntity::ok)
+                .orElseGet(() -> {
+                    logger.warn("User with ID {} not found for update", id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+                });
     }
 
     @Operation(
@@ -459,14 +402,9 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            boolean deleted = userService.deleteUser(id);
-            return deleted ? ResponseEntity.noContent().build()
-                    : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error deleting user with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        boolean deleted = userService.deleteUser(id);
+        return deleted ? ResponseEntity.noContent().build()
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @Operation(
@@ -499,21 +437,13 @@ public class UserController {
     @PreAuthorize("hasAuthority('GET_TEACHER_COURSES')")
     public ResponseEntity<PageDTO<CourseDTO>> getCoursesTeachingByUserId(@PathVariable Long id,
                                                                          Pageable pageable) {
-        try {
-            Page<CourseDTO> coursesPage = userService.getCoursesTeachingByUserId(id, pageable);
+        Page<CourseDTO> coursesPage = userService.getCoursesTeachingByUserId(id, pageable);
 
-            // Convertir la página a PageDTO
-            PageDTO<CourseDTO> coursesDTOPage = PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO);
+        // Convertir la página a PageDTO
+        PageDTO<CourseDTO> coursesDTOPage = PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO);
 
-            // Retornar la respuesta con el PageDTO
-            return ResponseEntity.ok(coursesDTOPage);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Courses for teacher ID {} not found", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error retrieving courses for teacher ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        // Retornar la respuesta con el PageDTO
+        return ResponseEntity.ok(coursesDTOPage);
     }
 
     @Operation(
@@ -554,19 +484,8 @@ public class UserController {
     @PreAuthorize("hasAuthority('ADD_TEACHER_COURSES')")
     public ResponseEntity<Void> assignCourseToTeacher(@PathVariable Long userId,
                                                       @PathVariable Long courseId) {
-        try {
-            userService.assignCourseToTeacher(userId, courseId);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to assign course ID {} to user ID {}", courseId, userId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data when assigning course ID {} to user ID {}: {}", courseId, userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error assigning course ID {} to user ID {}: {}", courseId, userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        userService.assignCourseToTeacher(userId, courseId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(
@@ -599,16 +518,8 @@ public class UserController {
     @PreAuthorize("hasAuthority('REMOVE_TEACHER_COURSE')")
     public ResponseEntity<Void> removeCourseFromTeacher(@PathVariable Long userId,
                                                         @PathVariable Long courseId) {
-        try {
-            userService.removeCourseFromTeacher(userId, courseId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove course ID {} from user ID {}", courseId, userId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error removing course ID {} from user ID {}: {}", courseId, userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        userService.removeCourseFromTeacher(userId, courseId);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -642,22 +553,14 @@ public class UserController {
             )
     })
     @GetMapping("/{userId}/enrollments")
-    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS')")
+    @PreAuthorize("hasAuthority('GET_STUDENT_ENROLLMENTS') and (#userId == principal.user.id or hasAuthority('MANAGE_ENROLLMENTS'))")
     public ResponseEntity<PageDTO<EnrollmentDTO>> retrieveEnrollmentsForUser(
             @PathVariable Long userId,
             Pageable pageable) {
-        try {
-            Page<EnrollmentDTO> enrollments = userService.getEnrollmentsByStudentId(userId, pageable);
-            PageDTO<EnrollmentDTO> enroll = PageConverter.convertPageToDTO(enrollments, EnrollmentDTO -> EnrollmentDTO);
+        Page<EnrollmentDTO> enrollments = userService.getEnrollmentsByStudentId(userId, pageable);
+        PageDTO<EnrollmentDTO> enroll = PageConverter.convertPageToDTO(enrollments, EnrollmentDTO -> EnrollmentDTO);
 
-            return ResponseEntity.ok(enroll);
-        } catch (ResourceNotFoundException e) {
-            logger.warn("No enrollments found for user ID {}: {}", userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (Exception e) {
-            logger.error("Error retrieving enrollments for user ID {}: {}", userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(enroll);
     }
 
     @Operation(
@@ -699,19 +602,8 @@ public class UserController {
     public ResponseEntity<Void> registerUserForCourseEnrollment(
             @PathVariable Long userId,
             @PathVariable Long courseId) {
-        try {
-            userService.enrollUserToCourse(userId, courseId);
-            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to enroll user ID {} to course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data when enrolling user ID {} to course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error enrolling user ID {} to course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        userService.enrollUserToCourse(userId, courseId);
+        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).build();
     }
 
     @Operation(
@@ -753,18 +645,7 @@ public class UserController {
     public ResponseEntity<Void> removeUserFromCourseEnrollment(
             @PathVariable Long userId,
             @PathVariable Long courseId) {
-        try {
-            userService.unrollUserFromCourse(userId, courseId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove user ID {} from course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data when attempting to remove user ID {} from course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Error removing user ID {} from course ID {}: {}", userId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        userService.unrollUserFromCourse(userId, courseId);
+        return ResponseEntity.noContent().build();
     }
 }

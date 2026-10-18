@@ -77,6 +77,8 @@ class GradeTest {
     @Test
     void testOnUpdate() {
         grade.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        grade.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = grade.getLastUpdate();
 
 

@@ -63,6 +63,8 @@ class UniversityTest {
     @Test
     void testOnUpdate() {
         university.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        university.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = university.getLastUpdate();
 
 
