@@ -23,9 +23,9 @@ cp .env.example .env          # then set JWT_SECRET, e.g. with: openssl rand -ba
 docker compose up --build
 ```
 
-- API: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- Health check: http://localhost:8080/actuator/health
+- API: <http://localhost:8080>
+- Swagger UI: <http://localhost:8080/swagger-ui/index.html>
+- Health check: <http://localhost:8080/actuator/health>
 
 Docker Compose loads demo data. Every demo user has the password `Demo1234!`:
 
@@ -79,7 +79,7 @@ flowchart LR
     controllers -.->|exceptions| advice[GlobalExceptionHandler<br/>@RestControllerAdvice]
 ```
 
-```
+```text
 UTEMP_Project/src/main/java/org/una/programmingIII/UTEMP_Project
 ├── configs/        Security, Swagger, async and observer configuration
 ├── controllers/    REST endpoints (/utemp/...) and request/response wrappers
@@ -147,9 +147,14 @@ jjwt · ModelMapper · springdoc-openapi · JUnit 5 · Mockito · Testcontainers
 
 Built as the final project of the Programming III course at Universidad Nacional (Costa Rica) by:
 
-- **Esteban Javier Granados Sibaja** ([@Esteban-JGS](https://github.com/Esteban-JGS)) — main author: data model,
-  repositories, DTOs and most of the services and controllers. After the course he also did the security hardening
-  described above (JWT and file-access fixes, Flyway, Docker, CI and the error-handling refactor).
-- **Juan Carlos Camacho Solano** ([@JuanCaUNA](https://github.com/JuanCaUNA)) — services, controllers and security
-  configuration.
-- **Noemí Murillo** — controllers.
+- **Esteban Javier Granados Sibaja** ([@Esteban-JGS](https://github.com/Esteban-JGS)) — main author of the
+  business logic (most of the services, including the asynchronous review and the observer-based notifications) and
+  of the data model: entities, DTOs, repositories and mappers. Also part of the controllers.
+- **Juan Carlos Camacho Solano** ([@JuanCaUNA](https://github.com/JuanCaUNA)) — most of the REST controllers and
+  their OpenAPI documentation, JWT security configuration, Docker Compose setup and part of the services.
+- **Noemí Murillo** — the original unit test suite (entities, request/response objects and services) and part of
+  the controllers.
+
+After the course, Esteban did the hardening described in this README: security fixes (credentials, JWT, file and
+per-user access control), Flyway migrations, Docker image, CI, centralized error handling and the repair of the test
+suite.
