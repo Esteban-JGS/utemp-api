@@ -83,6 +83,8 @@ class UserTest {
 
     @Test
     void testOnUpdate() {
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        user.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialUpdate = user.getLastUpdate();
         user.onUpdate();
         assertNotEquals(initialUpdate, user.getLastUpdate());

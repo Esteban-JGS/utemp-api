@@ -69,7 +69,7 @@ public class ManualReviewServiceImplementationTest {
 
         ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> manualReviewService.ManualReviewSubmission(submissionId, gradeValue, comments));
 
-        assertEquals("No grade found for submission ID: " + submissionId, thrown.getMessage());
+        assertEquals("Grade for submission not found with id: " + submissionId, thrown.getMessage());
 
         verify(gradeRepository, times(1)).findBySubmissionId(submissionId);
         verify(gradeRepository, times(0)).save(any(Grade.class));
@@ -84,7 +84,7 @@ public class ManualReviewServiceImplementationTest {
 
         InvalidDataException thrown = assertThrows(InvalidDataException.class, () -> manualReviewService.ManualReviewSubmission(submissionId, gradeValue, comments));
 
-        assertEquals("Grade value must be between 0 and 10.", thrown.getMessage());
+        assertEquals("Invalid data: Grade value must be between 0 and 10.", thrown.getMessage());
 
         verify(gradeRepository, times(0)).findBySubmissionId(submissionId);
         verify(gradeRepository, times(0)).save(any(Grade.class));
@@ -98,7 +98,7 @@ public class ManualReviewServiceImplementationTest {
         String comments = "";
         InvalidDataException thrown = assertThrows(InvalidDataException.class, () -> manualReviewService.ManualReviewSubmission(submissionId, gradeValue, comments));
 
-        assertEquals("Comments cannot be null or empty.", thrown.getMessage());
+        assertEquals("Invalid data: Comments cannot be null or empty.", thrown.getMessage());
 
         verify(gradeRepository, times(0)).findBySubmissionId(submissionId);
         verify(gradeRepository, times(0)).save(any(Grade.class));

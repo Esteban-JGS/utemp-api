@@ -40,6 +40,8 @@ class EnrollmentTest {
     @Test
     void testLastUpdateOnUpdate() {
         enrollment.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        enrollment.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = enrollment.getLastUpdate();
 
 

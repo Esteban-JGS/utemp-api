@@ -74,6 +74,8 @@ class SubmissionTest {
     @Test
     void testOnUpdate() {
         submission.onCreate();
+        // Start from an older timestamp so the check does not depend on the clock resolution
+        submission.setLastUpdate(LocalDateTime.now().minusMinutes(1));
         LocalDateTime initialLastUpdate = submission.getLastUpdate();
 
 
