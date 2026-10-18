@@ -17,6 +17,7 @@ import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
 import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
 import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.models.UserPermission;
+import org.una.programmingIII.UTEMP_Project.models.UserState;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 
 import javax.crypto.SecretKey;
@@ -165,6 +166,9 @@ public class JwtTokenProvider {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new InvalidTokenException("User not found for the given ID: " + id));
+        if (user.getState() != UserState.ACTIVE) {
+            throw new InvalidTokenException("The account of user " + id + " is not active.");
+        }
 
         logger.info("Tokens refreshed for user id {}", id);
         return new TokenResponseDTO(generateAccessToken(user), generateRefreshToken(user));

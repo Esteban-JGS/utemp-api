@@ -13,6 +13,7 @@ import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
 import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
 import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.models.UserPermission;
+import org.una.programmingIII.UTEMP_Project.models.UserState;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 
@@ -48,6 +49,7 @@ class JwtTokenProviderTest {
         testUser.setIdentificationNumber("000000000");
         testUser.setName("yo");
         testUser.setEmail("yo@example.com");
+        testUser.setState(UserState.ACTIVE);
         List<UserPermission> permissions = new ArrayList<>();
         permissions.add(UserPermission.MANAGE_USERS);
         testUser.setPermissions(permissions);
@@ -83,6 +85,16 @@ class JwtTokenProviderTest {
         assertNotNull(tokenResponse);
         assertTrue(jwtTokenProvider.validateToken(tokenResponse.getAccessToken(), testUser.getIdentificationNumber()));
         assertNotNull(tokenResponse.getRefreshToken());
+    }
+
+    @Test
+    void testRefreshTokensRejectsSuspendedUser() {
+        String refreshToken = jwtTokenProvider.generateRefreshToken(testUser);
+        testUser.setState(UserState.SUSPENDED);
+
+        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+
+        assertThrows(InvalidTokenException.class, () -> jwtTokenProvider.refreshTokens(refreshToken));
     }
 
     @Test
