@@ -406,7 +406,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             }
         });
 
-        if(userDTO.getSubmissions() != null && !userDTO.getPermissions().isEmpty())
+        if (userDTO.getPermissions() != null && !userDTO.getPermissions().isEmpty())
         {
             existingUser.setPermissions(userDTO.getPermissions());
         }

@@ -121,7 +121,10 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
     public CourseDTO createCourse(@Valid CourseDTO courseDTO) {
         try {
             Course course = courseMapper.convertToEntity(courseDTO);
-            course.setTeacher(getEntityById(/*courseDTO.getTeacher().getId()*/43L, userRepository, "Teacher"));
+            Long teacherId = courseDTO.getTeacher() != null && courseDTO.getTeacher().getId() != null
+                    ? courseDTO.getTeacher().getId()
+                    : courseDTO.getUserTeacherUniqueID();
+            course.setTeacher(getEntityById(teacherId, userRepository, "Teacher"));
             course.setDepartment(getEntityById(courseDTO.getDepartment().getId(), departmentRepository, "Department"));
             return executeWithLogging(() -> courseMapper.convertToDTO(courseRepository.save(course)),
                     "Error creating course");
