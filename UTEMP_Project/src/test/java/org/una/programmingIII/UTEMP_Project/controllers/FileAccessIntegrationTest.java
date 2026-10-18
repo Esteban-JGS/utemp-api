@@ -116,12 +116,10 @@ class FileAccessIntegrationTest {
     }
 
     private void assertDownloads(String token) throws Exception {
-        MvcResult result = mockMvc.perform(get("/utemp/files/download/{id}", fileId)
+        // The file is written on the request thread, so the response is complete without an async dispatch
+        mockMvc.perform(get("/utemp/files/download/{id}", fileId)
                         .header(HttpHeaders.AUTHORIZATION, bearer(token)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncNotStarted())
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.containsString("report.txt")))
                 .andExpect(content().bytes(CONTENT.getBytes(StandardCharsets.UTF_8)));
