@@ -1,27 +1,48 @@
 services:
   postgres:
     image: postgres:16.3
-    container_name: UTEMP_postgres
+    container_name: utemp_postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: ${PGDATA}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts:/docker-entrypoint-initdb.d
-    networks:
-      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
+  api:
+    build: .
+    container_name: utemp_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      FILE_STORAGE_PATH: /app/storage
+      # Loads the demo users and course on first start (see src/main/resources/db/demo)
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/demo
+    ports:
+      - "8080:8080"
+    volumes:
+      - api_storage:/app/storage
+
+  # Optional database UI: docker compose --profile tools up
   pgadmin:
     image: dpage/pgadmin4
-    container_name: UTEMP_pgadmin
+    container_name: utemp_pgadmin
+    profiles: ["tools"]
     depends_on:
       - postgres
-    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
@@ -29,14 +50,8 @@ services:
       - "8070:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - backend
 
 volumes:
-  postgres_data: # Volumen para almacenar datos de PostgreSQL
-    name: postgres_utemp
-  pgadmin_data: # Volumen para almacenar datos de pgAdmin
-    name: pgadmin_utemp
-
-networks:
-  backend:
+  postgres_data:
+  api_storage:
+  pgadmin_data:
