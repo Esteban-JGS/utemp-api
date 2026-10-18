@@ -19,7 +19,6 @@ import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
 import org.una.programmingIII.UTEMP_Project.services.assignment.AssignmentServiceImplementation;
-import org.una.programmingIII.UTEMP_Project.services.autoReview.AutoReviewService;
 import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
@@ -46,9 +45,6 @@ class AssignmentServiceImplementationTest {
 
     @Mock
     private SubmissionRepository submissionRepository;
-
-    @Mock
-    private AutoReviewService autoReviewService;
 
     @Mock
     private NotificationService notificationService;
@@ -177,7 +173,7 @@ class AssignmentServiceImplementationTest {
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(submissionRepository, times(1)).save(any(Submission.class));
-        verify(autoReviewService, times(1)).autoReviewSubmission(1L);
+        // The automatic review is triggered by the file upload, not by creating the submission
         assertSame(assignment, submission.getAssignment());
         assertTrue(assignment.getSubmissions().contains(submission));
         verify(notificationService, times(1)).sendNotificationToUser(eq(5L), anyString());

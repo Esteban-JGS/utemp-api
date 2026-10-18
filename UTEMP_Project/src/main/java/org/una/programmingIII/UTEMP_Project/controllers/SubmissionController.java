@@ -21,7 +21,6 @@ import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
-import org.una.programmingIII.UTEMP_Project.services.autoReview.AutoReviewService;
 import org.una.programmingIII.UTEMP_Project.services.submission.SubmissionService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -33,13 +32,11 @@ import java.util.Optional;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
-    private final AutoReviewService autoReviewService;
     private final Logger logger = LoggerFactory.getLogger(SubmissionController.class);
 
     @Autowired
-    public SubmissionController(SubmissionService submissionService, AutoReviewService autoReviewService) {
+    public SubmissionController(SubmissionService submissionService) {
         this.submissionService = submissionService;
-        this.autoReviewService = autoReviewService;
     }
 
     @Operation(
@@ -151,11 +148,6 @@ public class SubmissionController {
             @Valid @RequestBody SubmissionDTO submissionDTO) {
         // Llamada al servicio para crear la submission
         SubmissionDTO createdSubmission = submissionService.createSubmission(submissionDTO);
-
-        System.out.println(submissionDTO.toString());
-
-        autoReviewService.autoReviewSubmission(createdSubmission.getId());//todo
-
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
     }
 
