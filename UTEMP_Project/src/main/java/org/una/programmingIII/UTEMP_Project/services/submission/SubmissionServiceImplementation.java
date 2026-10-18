@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.submission;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import org.hibernate.service.spi.ServiceException;
@@ -74,6 +75,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all submissions: {}", e.getMessage());
             throw new InvalidDataException("Error fetching submissions from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all submissions: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all submissions");
@@ -90,6 +93,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error fetching submission by ID");
         } catch (ResourceNotFoundException e) {
             logger.warn("Submission not found with ID {}: {}", id, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error fetching submission with ID {}: {}", id, e.getMessage());
@@ -141,6 +146,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             // Manejo de excepciones de validación
             logger.warn("Validation error while creating submission: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             // Manejo de excepciones generales
             logger.error("Error creating submission: {}", e.getMessage());
@@ -163,6 +170,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         } catch (ValidationException e) {
             logger.warn("Validation error while updating submission: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error updating submission: {}", e.getMessage());
             throw new ServiceException("Error updating submission", e);
@@ -181,6 +190,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to delete submission: Submission not found with ID {}: {}", id, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error deleting submission: {}", e.getMessage());
@@ -201,6 +212,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error fetching submissions for assignment ID: " + assignmentId);
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to fetch submissions: Assignment not found with ID {}: {}", assignmentId, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error fetching submissions for assignment ID {}: {}", assignmentId, e.getMessage());
@@ -223,6 +236,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error adding file metadata to submission ID: " + submissionId);
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to add file metadata: Submission not found with ID {}: {}", submissionId, e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error adding file metadata to submission ID {}: {}", submissionId, e.getMessage());
@@ -258,7 +273,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             Submission submission = getEntityById(submissionId, submissionRepository, "Submission");
             FileMetadatum fileMetadatum = getEntityById(fileMetadatumId, fileMetadatumRepository, "FileMetadatum");
             if (!submission.getFileMetadata().contains(fileMetadatum)) {
-                throw new ResourceNotFoundException("File metadata not found in this submission", fileMetadatumId);
+                throw new ResourceNotFoundException("File metadata in this submission", fileMetadatumId);
             }
             executeWithLogging(() -> {
                 submission.getFileMetadata().remove(fileMetadatum);
@@ -267,6 +282,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error removing file metadata from submission ID: " + submissionId);
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to remove file metadata: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error removing file metadata from submission ID {}: {}", submissionId, e.getMessage());
@@ -282,7 +299,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             Grade grade = getEntityById(gradeId, gradeRepository, "Grade");
 
             if (!submission.getGrades().contains(grade)) {
-                throw new ResourceNotFoundException("Grade not found in this submission", gradeId);
+                throw new ResourceNotFoundException("Grade in this submission", gradeId);
             }
             executeWithLogging(() -> {
                 submission.getGrades().remove(grade);
@@ -291,6 +308,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error removing grade from submission ID: " + submissionId);
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to remove grade: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Error removing grade from submission ID {}: {}", submissionId, e.getMessage());
@@ -320,6 +339,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);
@@ -334,6 +355,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             notifyObservers("SUBMISSION_GRADED", message, submission.getStudent().getEmail());
             notificationService.sendNotificationToUser(submission.getStudent().getId(), message);
 
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error notifying student {}: {}", submission.getStudent().getEmail(), e.getMessage());
         }
@@ -384,6 +407,8 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             notifyObservers("GRADE_NOTIFICATION", message, submission.getAssignment().getCourse().getTeacher().getEmail());
             notificationService.sendNotificationToUser(submission.getAssignment().getCourse().getTeacher().getId(), message);
             logger.info("Notification sent for grade to teacher ID: {}", submission.getAssignment().getCourse().getTeacher().getId());
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error notifying teacher {}: {}", submission.getAssignment().getCourse().getTeacher().getEmail(), e.getMessage());
         }

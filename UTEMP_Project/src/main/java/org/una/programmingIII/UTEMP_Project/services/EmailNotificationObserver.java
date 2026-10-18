@@ -4,9 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -26,30 +24,11 @@ public class EmailNotificationObserver implements Observer {
             "NEW_ASSIGNMENT", "You Have a New Assignment"
     );
 
-    private final String host = "smtp.gmail.com";
-
-    private final int port = 587;
-
-    private final String username = "utempjen@gmail.com";
-
-    private final String password = "***REMOVED***";
-
+    // Configured by Spring Boot from the spring.mail.* properties
     private final JavaMailSender mailSender;
 
-    public EmailNotificationObserver() {
-        this.mailSender = createJavaMailSender();
-    }
-
-    private JavaMailSender createJavaMailSender() {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(host);
-        mailSender.setPort(port);
-        mailSender.setUsername(username);
-        mailSender.setPassword(password);
-
-        mailSender.getJavaMailProperties().put("mail.smtp.auth", true);
-        mailSender.getJavaMailProperties().put("mail.smtp.starttls.enable", true);
-        return mailSender;
+    public EmailNotificationObserver(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
     }
 
     @Async("taskExecutor")

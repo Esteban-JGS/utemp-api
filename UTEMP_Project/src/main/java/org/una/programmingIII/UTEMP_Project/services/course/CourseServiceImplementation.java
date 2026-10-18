@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.course;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import jakarta.validation.Valid;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
@@ -85,6 +86,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching all courses: {}", e.getMessage());
             throw new InvalidDataException("Error fetching courses from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching all courses: {}", e.getMessage());
             throw new InvalidDataException("Error fetching all courses");
@@ -105,6 +108,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course ID {}: {}", id, e.getMessage());
             return Optional.empty();
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while fetching course ID {}: {}", id, e.getMessage());
             throw new RuntimeException("An unexpected error occurred while fetching the course.", e);
@@ -116,7 +121,10 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
     public CourseDTO createCourse(@Valid CourseDTO courseDTO) {
         try {
             Course course = courseMapper.convertToEntity(courseDTO);
-            course.setTeacher(getEntityById(/*courseDTO.getTeacher().getId()*/43L, userRepository, "Teacher"));
+            Long teacherId = courseDTO.getTeacher() != null && courseDTO.getTeacher().getId() != null
+                    ? courseDTO.getTeacher().getId()
+                    : courseDTO.getUserTeacherUniqueID();
+            course.setTeacher(getEntityById(teacherId, userRepository, "Teacher"));
             course.setDepartment(getEntityById(courseDTO.getDepartment().getId(), departmentRepository, "Department"));
             return executeWithLogging(() -> courseMapper.convertToDTO(courseRepository.save(course)),
                     "Error creating course");
@@ -125,6 +133,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
             throw new InvalidDataException("Failed to create course: " + e.getMessage());
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while creating a course: {}", e.getMessage());
@@ -148,6 +158,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course update: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while updating course ID {}: {}", id, e.getMessage());
             throw new RuntimeException("An unexpected error occurred while updating the course.", e);
@@ -168,6 +180,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while deleting course: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while deleting course ID {}: {}", id, e.getMessage());
             throw new RuntimeException("An unexpected error occurred while deleting the course.", e);
@@ -185,6 +199,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching courses by teacher ID: {}", e.getMessage());
             throw new InvalidDataException("Error fetching courses from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching courses by teacher ID: {}", e.getMessage());
             throw new InvalidDataException("Error fetching courses by teacher ID");
@@ -208,6 +224,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching courses by department ID {}: {}", departmentId, e.getMessage());
             throw new InvalidDataException("Error fetching courses from the database");
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Unexpected error occurred while fetching courses by department ID {}: {}", departmentId, e.getMessage());
             throw new InvalidDataException("Error fetching courses");
@@ -234,6 +252,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for assignment: {}", e.getMessage());
             throw e;
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while adding assignment to course ID {}: {}", courseId, e.getMessage());
             throw new RuntimeException("An unexpected error occurred while adding the assignment to the course.", e);
@@ -256,10 +276,12 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
                     return null;
                 }, "Error removing assignment from course");
             } else {
-                throw new ResourceNotFoundException("Assignment not found in this course", courseId);
+                throw new ResourceNotFoundException("Assignment in this course", courseId);
             }
         } catch (ResourceNotFoundException e) {
             logger.error("Resource not found while removing assignment from course: {}", e.getMessage());
+            throw e;
+        } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
             logger.error("An unexpected error occurred while removing assignment ID {} from course ID {}: {}", assignmentId, courseId, e.getMessage());
@@ -288,6 +310,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
+        } catch (DomainException | DataAccessException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("{}: {}", errorMessage, e.getMessage());
             throw new ServiceException(errorMessage, e);
@@ -303,6 +327,8 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
             try {
                 notifyObservers("NEW_ASSIGNMENT", message, enrollment.getStudent().getEmail());
                 notificationService.sendNotificationToUser(enrollment.getStudent().getId(), message);
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Error notifying student {}: {}", enrollment.getStudent().getEmail(), e.getMessage());
             }

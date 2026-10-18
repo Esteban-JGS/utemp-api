@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
@@ -164,56 +165,12 @@ public class CourseTest {
     }
 
     @Test
-    void testNullValuesOnBuilder() {
-        assertThrows(NullPointerException.class, () -> {
-            Course.builder()
-                    .name(null) // Nombre nulo
-                    .description("Valid Description")
-                    .teacher(teacher)
-                    .department(department)
-                    .state(CourseState.ACTIVE)
-                    .build();
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            Course.builder()
-                    .name("Valid Name")
-                    .description(null) // Descripción nula
-                    .teacher(teacher)
-                    .department(department)
-                    .state(CourseState.ACTIVE)
-                    .build();
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            Course.builder()
-                    .name("Valid Name")
-                    .description("Valid Description")
-                    .teacher(null)
-                    .department(department)
-                    .state(CourseState.ACTIVE)
-                    .build();
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            Course.builder()
-                    .name("Valid Name")
-                    .description("Valid Description")
-                    .teacher(teacher)
-                    .department(null)
-                    .state(CourseState.ACTIVE)
-                    .build();
-        });
-
-        assertThrows(NullPointerException.class, () -> {
-            Course.builder()
-                    .name("Valid Name")
-                    .description("Valid Description")
-                    .teacher(teacher)
-                    .department(department)
-                    .state(null)
-                    .build();
-        });
+    void testRequiredFieldsAreValidated() {
+        // Required fields are enforced by Bean Validation (and NOT NULL columns), not by the builder
+        Course invalid = Course.builder().name(null).description(null).teacher(null).department(null).state(null).build();
+        Set<String> fields = new HashSet<>();
+        validator.validate(invalid).forEach(v -> fields.add(v.getPropertyPath().toString()));
+        assertTrue(fields.containsAll(Set.of("name", "description", "teacher", "department", "state")), "violations: " + fields);
     }
 
 

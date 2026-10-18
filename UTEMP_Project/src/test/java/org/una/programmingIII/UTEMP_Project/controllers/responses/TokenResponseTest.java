@@ -69,21 +69,17 @@ class TokenResponseTest {
 
 
     @Test
-    void testToString() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(1L);
-        userDTO.setIdentificationNumber("12345");
-        userDTO.setName("John Doe");
-
+    void testToStringDoesNotLeakTokens() {
         TokenResponse tokenResponse = TokenResponse.builder()
                 .token("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+                .refreshToken("refresh-token-value")
                 .tokenType("Bearer")
-                .user(userDTO)
                 .expiresIn(3600)
                 .build();
 
-        String expectedString = "TokenResponse(token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..., tokenType=Bearer, user=UserDTO{id=1, identificationNumber='12345', name='John Doe'}, expiresIn=3600)";
-        assertEquals(expectedString, tokenResponse.toString(), "El método toString no devuelve la representación esperada");
+        // Responses may end up in logs, so toString must not include the tokens
+        String text = tokenResponse.toString();
+        assertFalse(text.contains("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"), "toString must not expose the access token");
+        assertFalse(text.contains("refresh-token-value"), "toString must not expose the refresh token");
     }
 }
-

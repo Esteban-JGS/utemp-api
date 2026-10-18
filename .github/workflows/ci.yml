@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: UTEMP_Project
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: UTEMP_Project/pom.xml
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Build Docker image
+        run: docker build -t utemp-api .

@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.CourseDTO;
-import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.course.CourseService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
@@ -78,15 +77,10 @@ public class CourseController {
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_COURSES')")
     public ResponseEntity<PageDTO<CourseDTO>> getAllCourses(Pageable pageable) {
-        try {
-            Page<CourseDTO> coursesPage = courseService.getAllCourses(pageable);
-            logger.info("Fetched all courses successfully.");
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
+        Page<CourseDTO> coursesPage = courseService.getAllCourses(pageable);
+        logger.info("Fetched all courses successfully.");
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
 
-        } catch (Exception e) {
-            logger.error("Error fetching all courses: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
     }
 
     @Operation(
@@ -145,18 +139,10 @@ public class CourseController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGE_COURSES')")
     public ResponseEntity<CourseDTO> getCourseById(@Parameter(description = "ID of the course to be retrieved") @PathVariable Long id) {
-        try {
-            Optional<CourseDTO> courseDTO = courseService.getCourseById(id);
-            return courseDTO
-                    .map(ResponseEntity::ok)
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", id));
-        } catch (ResourceNotFoundException e) {
-            logger.error("1Course not found with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error retrieving course with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<CourseDTO> courseDTO = courseService.getCourseById(id);
+        return courseDTO
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", id));
     }
 
     @Operation(
@@ -216,16 +202,8 @@ public class CourseController {
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGE_COURSES')")
     public ResponseEntity<CourseDTO> createCourse(@Valid @RequestBody CourseDTO courseDTO) {
-        try {
-            CourseDTO createdCourse = courseService.createCourse(courseDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCourse);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for creating course: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error creating course: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        CourseDTO createdCourse = courseService.createCourse(courseDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCourse);
     }
 
     @Operation(
@@ -308,21 +286,10 @@ public class CourseController {
             )
             @PathVariable Long id,
             @Valid @RequestBody CourseDTO courseDTO) {
-        try {
-            Optional<CourseDTO> updatedCourse = courseService.updateCourse(id, courseDTO);
-            return updatedCourse
-                    .map(ResponseEntity::ok)
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", id));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Course not found with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for updating course ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error updating course ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Optional<CourseDTO> updatedCourse = courseService.updateCourse(id, courseDTO);
+        return updatedCourse
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", id));
     }
 
     @Operation(
@@ -382,16 +349,8 @@ public class CourseController {
                     example = "10"
             )
             @PathVariable Long id) {
-        try {
-            courseService.deleteCourse(id);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.error("Error deleting course with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error deleting course with ID {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        courseService.deleteCourse(id);
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -514,20 +473,9 @@ public class CourseController {
             )
             @PathVariable Long teacherId,
             Pageable pageable) {
-        try {
-            Page<CourseDTO> coursesPage = courseService.getCoursesByTeacherId(teacherId, pageable);
-            logger.info("Fetched courses for teacher ID {} successfully.", teacherId);
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
-        } catch (ResourceNotFoundException e) {
-            logger.error("Teacher not found with ID {}: {}", teacherId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for teacher ID {}: {}", teacherId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error fetching courses for teacher ID {}: {}", teacherId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        Page<CourseDTO> coursesPage = courseService.getCoursesByTeacherId(teacherId, pageable);
+        logger.info("Fetched courses for teacher ID {} successfully.", teacherId);
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
     }
 
     @Operation(
@@ -649,20 +597,9 @@ public class CourseController {
             )
             @PathVariable Long departmentId,
             Pageable pageable) {
-        try {
-            Page<CourseDTO> coursesPage = courseService.getCoursesByDepartmentId(departmentId, pageable);
-            return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
+        Page<CourseDTO> coursesPage = courseService.getCoursesByDepartmentId(departmentId, pageable);
+        return ResponseEntity.ok(PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO));
 
-        } catch (ResourceNotFoundException e) {
-            logger.error("Department not found with ID {}: {}", departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for department ID {}: {}", departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Unexpected error fetching courses for department ID {}: {}", departmentId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
     }
 
     @Operation(
@@ -707,19 +644,8 @@ public class CourseController {
     @PreAuthorize("hasAuthority('ADD_COURSE_ASSIGNMENTS')")
     public ResponseEntity<Void> addAssignmentToCourse(@PathVariable Long courseId,
                                                       @RequestBody AssignmentDTO assignmentDTO) {
-        try {
-            courseService.addAssignmentToCourse(courseId, assignmentDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).build(); // 201 Created response on successful addition
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to add assignment to course ID {}: {}", courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (InvalidDataException e) {
-            logger.error("Invalid data for assignment when adding to course ID {}: {}", courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            logger.error("Error adding assignment to course ID {}: {}", courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        courseService.addAssignmentToCourse(courseId, assignmentDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).build(); // 201 Created response on successful addition
     }
 
     @Operation(
@@ -756,15 +682,7 @@ public class CourseController {
     @PreAuthorize("hasAuthority('REMOVE_COURSE_ASSIGNMENTS')")
     public ResponseEntity<Void> removeAssignmentFromCourse(@PathVariable Long courseId,
                                                            @PathVariable Long assignmentId) {
-        try {
-            courseService.removeAssignmentFromCourse(courseId, assignmentId);
-            return ResponseEntity.noContent().build();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove assignment ID {} from course ID {}: {}", assignmentId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (Exception e) {
-            logger.error("Error removing assignment ID {} from course ID {}: {}", assignmentId, courseId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        courseService.removeAssignmentFromCourse(courseId, assignmentId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -62,8 +62,9 @@ public class Assignment {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.lastUpdate = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.lastUpdate = now;
         this.deadline = Instant.now().plus(7, ChronoUnit.DAYS);
     }
 

@@ -1,5 +1,6 @@
 package org.una.programmingIII.UTEMP_Project.services.autoReview;
 
+import org.una.programmingIII.UTEMP_Project.exceptions.DomainException;
 import io.krakens.grok.api.Grok;
 import io.krakens.grok.api.GrokCompiler;
 import io.krakens.grok.api.Match;
@@ -78,6 +79,8 @@ public class AutoReviewServiceImplementation extends Subject<EmailNotificationOb
             } catch (ResourceNotFoundException e) {
                 logger.error("Resource not found: {}", e.getMessage());
                 throw e;
+            } catch (DomainException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Error processing auto review: {}", e.getMessage(), e);
                 throw new RuntimeException("Failed to process auto review due to an unexpected error.");
@@ -130,7 +133,7 @@ public class AutoReviewServiceImplementation extends Subject<EmailNotificationOb
         }
 
         return submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Submission with ID " + submissionId + " not found.", submissionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
     }
 
 
@@ -142,6 +145,8 @@ public class AutoReviewServiceImplementation extends Subject<EmailNotificationOb
             notifyObservers("SUBMISSION_GRADED", message, submission.getStudent().getEmail());
             // notificationService.sendNotificationToUser(submission.getStudent(), message);
 
+        } catch (DomainException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Error notifying student {}: {}", submission.getStudent().getEmail(), e.getMessage(), e);
         }
