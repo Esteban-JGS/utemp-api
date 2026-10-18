@@ -1,6 +1,6 @@
 # UTEMP API — University Task and Evaluation Management Platform
 
-[![CI](https://github.com/Esteban-JGS/UTEMP_API_Projecto_Programming_III/actions/workflows/ci.yml/badge.svg)](https://github.com/Esteban-JGS/UTEMP_API_Projecto_Programming_III/actions/workflows/ci.yml)
+[![CI](https://github.com/Esteban-JGS/utemp-api/actions/workflows/ci.yml/badge.svg)](https://github.com/Esteban-JGS/utemp-api/actions/workflows/ci.yml)
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot 3.3](https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F)
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
@@ -17,8 +17,8 @@ PostgreSQL with Flyway migrations, Docker Compose, and tests with JUnit 5, Mocki
 Requirements: Docker.
 
 ```bash
-git clone https://github.com/Esteban-JGS/UTEMP_API_Projecto_Programming_III.git
-cd UTEMP_API_Projecto_Programming_III/UTEMP_Project
+git clone https://github.com/Esteban-JGS/utemp-api.git
+cd utemp-api/UTEMP_Project
 cp .env.example .env          # then set JWT_SECRET, e.g. with: openssl rand -base64 48
 docker compose up --build
 ```
