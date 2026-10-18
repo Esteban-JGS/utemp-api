@@ -5,14 +5,18 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -35,6 +39,7 @@ public class University {
 
     @OneToMany(mappedBy = "university")
     @Builder.Default
+    @ToString.Exclude
     private List<Faculty> faculties = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
@@ -53,5 +58,18 @@ public class University {
     @PreUpdate
     protected void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof University other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Constant per entity type, so the hash does not change when the id is assigned on persist
+        return University.class.hashCode();
     }
 }

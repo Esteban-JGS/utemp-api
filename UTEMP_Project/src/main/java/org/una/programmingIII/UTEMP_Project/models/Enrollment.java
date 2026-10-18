@@ -4,13 +4,17 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -26,12 +30,14 @@ public class Enrollment implements Identifiable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
     @Builder.Default
+    @ToString.Exclude
     private Course course = new Course();
 
     @NotNull(message = "Student must not be null")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     @Builder.Default
+    @ToString.Exclude
     private User student = new User();
 
     @Enumerated(EnumType.STRING)
@@ -61,5 +67,18 @@ public class Enrollment implements Identifiable {
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Enrollment other)) return false;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Constant per entity type, so the hash does not change when the id is assigned on persist
+        return Enrollment.class.hashCode();
     }
 }
