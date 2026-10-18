@@ -20,6 +20,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     @Query("SELECT e FROM Enrollment e WHERE e.student.id = :studentId")
     Page<Enrollment> findByStudentId(@Param("studentId") Long studentId, Pageable pageable);
 
+    @Query("select count(e) > 0 from Enrollment e where e.course.id = :courseId and e.student.id = :studentId")
+    boolean isEnrolled(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
     @Query("""
             select count(e) > 0 from Enrollment e, Assignment a
             where a.id = :assignmentId and e.course = a.course and e.student.id = :studentId

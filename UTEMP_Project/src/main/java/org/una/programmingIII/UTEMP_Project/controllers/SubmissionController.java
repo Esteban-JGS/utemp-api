@@ -254,7 +254,7 @@ public class SubmissionController {
             )
     })
     @GetMapping("/assignment/{assignmentId}")
-    @PreAuthorize("hasAuthority('GET_ASSIGNMENT_SUBMISSIONS')")
+    @PreAuthorize("hasAuthority('GET_ASSIGNMENT_SUBMISSIONS') and @access.canManageAssignment(#assignmentId, principal)")
     public ResponseEntity<PageDTO<SubmissionDTO>> getSubmissionsByAssignmentId(
             @Parameter(description = "ID of the assignment", required = true) @PathVariable Long assignmentId,
             Pageable pageable) {
@@ -315,7 +315,7 @@ public class SubmissionController {
             )
     })
     @PostMapping("/{submissionId}/grades")
-    @PreAuthorize("hasAuthority('ADD_SUBMISSION_GRADES')")
+    @PreAuthorize("hasAuthority('ADD_SUBMISSION_GRADES') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<GradeDTO> addGradeToSubmission(
             @Parameter(description = "ID of the submission", required = true) @PathVariable Long submissionId,
             @Valid @RequestBody GradeDTO gradeDTO) {
@@ -355,7 +355,7 @@ public class SubmissionController {
             )
     })
     @DeleteMapping("/{submissionId}/grades/{gradeId}")
-    @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_GRADES')")
+    @PreAuthorize("hasAuthority('REMOVE_SUBMISSION_GRADES') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<Void> removeGradeFromSubmission(@PathVariable Long submissionId,
                                                           @PathVariable Long gradeId) {
         submissionService.removeGradeFromSubmission(submissionId, gradeId);
@@ -363,7 +363,7 @@ public class SubmissionController {
     }
 
     @PutMapping("/{submissionId}/{gradeValue}")
-    @PreAuthorize("hasAuthority('EVALUATE_SUBMISSIONS')")
+    @PreAuthorize("hasAuthority('EVALUATE_SUBMISSIONS') and @access.canManageSubmission(#submissionId, principal)")
     public ResponseEntity<Void> manualReviewSubmission(@PathVariable Long submissionId, @PathVariable Double gradeValue, @RequestBody String comments) {
         Optional<Grade> grade = submissionService.manualReviewSubmission(submissionId, gradeValue, comments);
         if (grade.isPresent()) {
