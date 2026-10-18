@@ -55,6 +55,17 @@ class StudentAccessIntegrationTest {
     }
 
     @Test
+    void studentCannotReadAnotherStudentsGrades() throws Exception {
+        mockMvc.perform(get("/utemp/grades/submissions/{id}/grades", studentOneSubmissionId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_TWO))))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/utemp/grades/submissions/{id}/grades", studentOneSubmissionId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_ONE))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void studentCannotReadOrMarkAnotherStudentsNotification() throws Exception {
         Long notificationId = jdbcTemplate.queryForObject("""
                 INSERT INTO notifications (user_id, message, status, created_at, last_update)
