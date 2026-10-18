@@ -80,6 +80,29 @@ class StudentAccessIntegrationTest {
     }
 
     @Test
+    void studentCannotAddOrRemoveFilesOfAnotherStudentsSubmission() throws Exception {
+        Long fileId = jdbcTemplate.queryForObject("""
+                INSERT INTO file_metadata (submission_id, student_id, file_name, file_size, storage_path, created_at, last_update)
+                VALUES (?, ?, 'mine.txt', 4, 'not-on-disk', NOW(), NOW()) RETURNING id
+                """, Long.class, studentOneSubmissionId, studentOneId);
+        String token = data.login(TestData.STUDENT_TWO);
+
+        mockMvc.perform(delete("/utemp/submissions/{id}/file-metadata/{fileId}", studentOneSubmissionId, fileId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(post("/utemp/submissions/{id}/file-metadata", studentOneSubmissionId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"fileName": "x.txt", "fileSize": 3, "student": {"id": %d}, "submission": {"id": %d}}
+                                """.formatted(studentTwoId, studentOneSubmissionId)))
+                .andExpect(status().is4xxClientError());
+
+        assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE id = ?", fileId)).isOne();
+        assertThat(data.count("SELECT COUNT(*) FROM file_metadata WHERE student_id = ?", studentTwoId)).isZero();
+    }
+
+    @Test
     void studentCannotReadOrMarkAnotherStudentsNotification() throws Exception {
         Long notificationId = jdbcTemplate.queryForObject("""
                 INSERT INTO notifications (user_id, message, status, created_at, last_update)

@@ -13,14 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
-import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Assignment;
 import org.una.programmingIII.UTEMP_Project.models.Course;
-import org.una.programmingIII.UTEMP_Project.models.FileMetadatum;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
 import org.una.programmingIII.UTEMP_Project.models.Submission;
 import org.una.programmingIII.UTEMP_Project.models.User;
@@ -47,9 +45,6 @@ public class SubmissionServiceImplementationTest {
     private AssignmentRepository assignmentRepository;
 
     @Mock
-    private FileMetadatumRepository fileMetadatumRepository;
-
-    @Mock
     private GradeRepository gradeRepository;
 
     @Mock
@@ -62,14 +57,10 @@ public class SubmissionServiceImplementationTest {
     private GenericMapper<Submission, SubmissionDTO> submissionMapper;
 
     @Mock
-    private GenericMapper<FileMetadatum, FileMetadatumDTO> fileMetadatumMapper;
-
-    @Mock
     private GenericMapper<Grade, GradeDTO> gradeMapper;
 
     private Submission submission;
     private SubmissionDTO submissionDTO;
-    private FileMetadatumDTO fileMetadatumDTO;
     private GradeDTO gradeDTO;
     private User student;
     private Assignment assignment;
@@ -106,9 +97,6 @@ public class SubmissionServiceImplementationTest {
         submissionDTO.setFileName("testFile");
         submissionDTO.setStudent(studentDTO);
         submissionDTO.setAssignment(assignmentDTO);
-
-        fileMetadatumDTO = new FileMetadatumDTO();
-        fileMetadatumDTO.setId(1L);
 
         gradeDTO = new GradeDTO();
         gradeDTO.setId(1L);
@@ -207,19 +195,6 @@ public class SubmissionServiceImplementationTest {
     }
 
     @Test
-    public void testAddFileMetadatumToSubmission() {
-        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
-        when(fileMetadatumMapper.convertToEntity(fileMetadatumDTO)).thenReturn(new FileMetadatum());
-        when(fileMetadatumRepository.save(any(FileMetadatum.class))).thenReturn(new FileMetadatum());
-        when(fileMetadatumMapper.convertToDTO(any(FileMetadatum.class))).thenReturn(fileMetadatumDTO);
-
-        FileMetadatumDTO result = submissionService.addFileMetadatumToSubmission(1L, fileMetadatumDTO);
-
-        assertNotNull(result);
-        verify(fileMetadatumRepository, times(1)).save(any(FileMetadatum.class));
-    }
-
-    @Test
     public void testAddGradeToSubmission() {
         when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
         when(gradeMapper.convertToEntity(gradeDTO)).thenReturn(new Grade());
@@ -230,18 +205,6 @@ public class SubmissionServiceImplementationTest {
 
         assertNotNull(result);
         verify(gradeRepository, times(1)).save(any(Grade.class));
-    }
-
-    @Test
-    public void testRemoveFileMetadatumFromSubmission() {
-        FileMetadatum file = new FileMetadatum();
-        submission.getFileMetadata().add(file);
-        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
-        when(fileMetadatumRepository.findById(1L)).thenReturn(Optional.of(file));
-
-        submissionService.removeFileMetadatumFromSubmission(1L, 1L);
-
-        verify(fileMetadatumRepository, times(1)).delete(any(FileMetadatum.class));
     }
 
     @Test
