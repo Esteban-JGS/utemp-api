@@ -94,11 +94,15 @@ class TestData {
     }
 
     void enroll(Long studentId, Long courseId) {
+        enroll(studentId, courseId, "ENROLLED");
+    }
+
+    void enroll(Long studentId, Long courseId, String state) {
         jdbcTemplate.update("""
                 INSERT INTO enrollments (course_id, student_id, state, created_at, last_update)
-                SELECT ?, ?, 'ENROLLED', NOW(), NOW()
+                SELECT ?, ?, ?, NOW(), NOW()
                 WHERE NOT EXISTS (SELECT 1 FROM enrollments WHERE course_id = ? AND student_id = ?)
-                """, courseId, studentId, courseId, studentId);
+                """, courseId, studentId, state, courseId, studentId);
     }
 
     /** The first submission of the student for the assignment, created if needed. */

@@ -32,6 +32,7 @@ class StudentAccessIntegrationTest {
 
     private static final String ENROLLED_STUDENT = "300000091";
     private static final String NOT_ENROLLED_STUDENT = "300000092";
+    private static final String DROPPED_STUDENT = "300000095";
 
     @Autowired
     private MockMvc mockMvc;
@@ -166,6 +167,20 @@ class StudentAccessIntegrationTest {
                 .andExpect(status().isForbidden());
 
         assertThat(data.count("SELECT COUNT(*) FROM submissions WHERE student_id = ?", studentId)).isZero();
+    }
+
+    @Test
+    void onlyStudentsStillEnrolledSeeTheAssignmentsOfACourse() throws Exception {
+        Long courseId = data.courseId(TestData.DEMO_COURSE);
+        Long droppedStudentId = data.user(DROPPED_STUDENT, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(droppedStudentId, courseId, "DROPPED");
+
+        mockMvc.perform(get("/utemp/assignments/course/{id}", courseId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(DROPPED_STUDENT))))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/utemp/assignments/course/{id}", courseId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TestData.STUDENT_ONE))))
+                .andExpect(status().isOk());
     }
 
     private String submissionJson(Long studentId) {
