@@ -82,6 +82,9 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     @Transactional
     public UserDTO createUser(UserDTO userDTO) {
         validateUser(userDTO);
+        if (userDTO.getPassword() == null) {
+            throw new InvalidDataException("Password must not be null");
+        }
         checkIfUserExists(userDTO.getIdentificationNumber());
         User user = userMapper.convertToEntity(userDTO);
         user.setPassword(passwordEncryptionService.encryptPassword(userDTO.getPassword()));

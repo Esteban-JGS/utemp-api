@@ -34,7 +34,7 @@ public class UserDTO {
     @Size(max = 150, message = "Email must be at most 150 characters long")
     private String email;
 
-    @NotNull(message = "Password must not be null")
+    // Required to create a user; on update it is optional and the current one is kept if omitted
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @Size(max = 128, message = "Password must be at most 128 characters long")
     // Accepted on create/update requests but never serialized in responses

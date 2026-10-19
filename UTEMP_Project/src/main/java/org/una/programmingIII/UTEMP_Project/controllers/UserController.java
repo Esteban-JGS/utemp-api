@@ -283,7 +283,7 @@ public class UserController {
 
     @Operation(
             summary = "Update User",
-            description = "Updates the details of an existing user."
+            description = "Updates the details of an existing user. The password is optional: if it is omitted, the current one is kept."
     )
     @ApiResponses(value = {
             @ApiResponse(
