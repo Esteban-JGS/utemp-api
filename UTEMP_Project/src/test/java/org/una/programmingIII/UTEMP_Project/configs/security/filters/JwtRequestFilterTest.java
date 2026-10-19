@@ -16,7 +16,7 @@ import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
 import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.models.UserState;
 import org.una.programmingIII.UTEMP_Project.security.filters.JwtRequestFilter;
-import org.una.programmingIII.UTEMP_Project.security.utils.jwtTokenProvider.JwtTokenProvider;
+import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetailsService;
 

@@ -15,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
 import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
 import org.una.programmingIII.UTEMP_Project.security.utils.SecurityErrorWriter;
-import org.una.programmingIII.UTEMP_Project.security.utils.jwtTokenProvider.JwtTokenProvider;
+import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetailsService;
 
@@ -28,8 +28,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
 
-    public JwtRequestFilter(JwtTokenProvider jwtTokenProviderService, CustomUserDetailsService userDetailsService) {
-        this.jwtTokenProvider = jwtTokenProviderService;
+    public JwtRequestFilter(JwtTokenProvider jwtTokenProvider, CustomUserDetailsService userDetailsService) {
+        this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
     }
 
