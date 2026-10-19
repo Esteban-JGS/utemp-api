@@ -40,6 +40,7 @@ class CourseworkIntegrationTest {
     private static final String STUDENT_WITH_FILES = "300000082";
     private static final String STUDENT_TO_ENROLL = "300000083";
     private static final String STUDENT_TO_GRADE = "300000084";
+    private static final String STUDENT_TO_REVIEW = "300000085";
 
     @Autowired
     private MockMvc mockMvc;
@@ -98,6 +99,30 @@ class CourseworkIntegrationTest {
                 .singleElement().asString().contains("Quiz", "9.5");
         // The teacher is the one who graded; they used to get the notification instead of the student
         assertThat(data.count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", teacherId)).isZero();
+    }
+
+    @Test
+    void manualReviewStoresTheCommentAsWritten() throws Exception {
+        Long studentId = data.user(STUDENT_TO_REVIEW, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long submissionId = data.submission(data.assignment(courseId, "Lab"), studentId);
+        jdbcTemplate.update("DELETE FROM grades WHERE submission_id = ?", submissionId);
+        jdbcTemplate.update("""
+                INSERT INTO grades (submission_id, grade, comments, reviewed_by_ai, state, created_at, last_update)
+                VALUES (?, 6, 'Preliminary', TRUE, 'PENDING_REVIEW', NOW(), NOW())
+                """, submissionId);
+
+        mockMvc.perform(put("/utemp/submissions/{id}/{grade}", submissionId, 8.5)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TEACHER)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"comments": "Nice work"}
+                                """))
+                .andExpect(status().isOk());
+
+        assertThat(jdbcTemplate.queryForMap("SELECT grade, comments, state FROM grades WHERE submission_id = ?", submissionId))
+                .containsEntry("grade", 8.5)
+                .containsEntry("comments", "Nice work")
+                .containsEntry("state", "FINALIZED");
     }
 
     @Test
