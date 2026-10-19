@@ -24,13 +24,13 @@ cp .env.example .env          # then set JWT_SECRET, e.g. with: openssl rand -ba
 docker compose up --build
 ```
 
-On Windows, if `git clone` fails with "Filename too long", run `git config --global core.longpaths true` and clone
-again: some source paths are up to 137 characters long, so a clone in a deep folder can exceed the default
-260-character limit.
-
 - API: <http://localhost:8080>
 - Swagger UI: <http://localhost:8080/swagger-ui/index.html>
 - Health check: <http://localhost:8080/actuator/health>
+
+On Windows, if `git clone` fails with "Filename too long", run `git config --global core.longpaths true` and clone
+again: some source paths are up to 137 characters long, so a clone in a deep folder can exceed the default
+260-character limit.
 
 Docker Compose loads demo data. Every demo user has the password `Demo1234!`:
 
