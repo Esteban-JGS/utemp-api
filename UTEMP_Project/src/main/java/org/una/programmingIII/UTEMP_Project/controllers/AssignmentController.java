@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
+import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.assignment.AssignmentService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -195,14 +196,10 @@ public class AssignmentController {
                     required = true
             )
             @PathVariable Long id) {
-        Optional<AssignmentDTO> assignmentDTO = assignmentService.getAssignmentById(id);
-        if (assignmentDTO.isPresent()) {
-            return ResponseEntity.ok(assignmentDTO.get());
-        } else {
-            logger.error("Assignment not found with ID {}.", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new AssignmentDTO(null, "Assignment not found", null, null, null, null, null, null, null)); // Aquí puedes proporcionar un cuerpo más informativo
-        }
+        // A missing assignment throws ResourceNotFoundException, which the exception handler turns into a 404
+        return assignmentService.getAssignmentById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment", id));
     }
 
     @Operation(
