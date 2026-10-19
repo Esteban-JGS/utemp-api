@@ -56,15 +56,14 @@ public class FileMetadatumDTO {
 
     @Override
     public String toString() {
-        return "CourseDTO{" +
+        return "FileMetadatumDTO{" +
                 "id=" + id +
-                ", name='" + fileSize + '\'' +
-                ", description='" + fileName + '\'' +
-                ", state=" + fileType +
+                ", fileName='" + fileName + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileType='" + fileType + '\'' +
                 ", createdAt=" + createdAt +
                 ", lastUpdate=" + lastUpdate +
-                ", teacher=" + storagePath +
-                ", department=" + (student != null ? student.getId() : "null") +
+                ", studentId=" + (student != null ? student.getId() : "null") +
                 '}';
     }
 }
