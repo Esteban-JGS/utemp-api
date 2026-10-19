@@ -38,7 +38,7 @@ services:
 
   # Optional database UI: docker compose --profile tools up
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:9.18
     container_name: utemp_pgadmin
     profiles: ["tools"]
     depends_on:
