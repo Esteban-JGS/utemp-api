@@ -126,6 +126,7 @@ class JwtRequestFilterTest {
 
     private void assertUnauthorized() throws Exception {
         assertEquals(401, response.getStatus());
+        assertTrue(response.getContentAsString().contains("\"statusCode\":401"));
         verify(filterChain, never()).doFilter(any(), any());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }

@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidTokenException;
 import org.una.programmingIII.UTEMP_Project.exceptions.TokenExpiredException;
+import org.una.programmingIII.UTEMP_Project.security.utils.SecurityErrorWriter;
 import org.una.programmingIII.UTEMP_Project.security.utils.jwtTokenProvider.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetails;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetailsService;
@@ -56,14 +57,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
                 authenticateUser(userDetails);
             } else {
-                handleException(response, "Invalid JWT Token");
+                handleException(response, "Invalid token");
                 return;
             }
         } catch (TokenExpiredException e) {
-            handleException(response, "Token has expired", e);
+            handleException(response, "Token expired", e);
             return;
         } catch (InvalidTokenException e) {
-            handleException(response, "Invalid JWT token", e);
+            handleException(response, "Invalid token", e);
             return;
         } catch (Exception e) {
             handleException(response, "Authentication failed", e);
@@ -94,7 +95,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private void handleException(HttpServletResponse response, String message, Exception e) throws IOException {
         if (!response.isCommitted()) {
             logger.error("{}: {}", message, e != null ? e.getMessage() : "");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
+            SecurityErrorWriter.write(response, HttpServletResponse.SC_UNAUTHORIZED, message);
         }
     }
 }
