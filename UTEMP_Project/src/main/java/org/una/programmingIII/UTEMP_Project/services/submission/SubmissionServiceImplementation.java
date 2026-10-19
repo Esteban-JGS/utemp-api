@@ -87,7 +87,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return Optional.of(submissionMapper.convertToDTO(submission));
             }, "Error fetching submission by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -114,8 +113,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
             return executeWithLogging(() -> submissionMapper.convertToDTO(finalSubmission), "Error creating submission");
         } catch (ResourceNotFoundException e) {
-            // Manejo de excepciones cuando no se encuentra el Assignment
-            logger.warn("Failed to create submission: Assignment not found with ID {}: {}", submissionDTO.getAssignment().getId(), e.getMessage());
             throw e;
         } catch (ValidationException e) {
             // Manejo de excepciones de validación
@@ -140,7 +137,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             return executeWithLogging(() -> Optional.of(submissionMapper.convertToDTO(submissionRepository.save(existingSubmission))),
                     "Error updating submission");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update submission: Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (ValidationException e) {
             logger.warn("Validation error while updating submission: {}", e.getMessage());
@@ -164,7 +160,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error deleting submission");
 
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete submission: Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -186,7 +181,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return submissions.map(submissionMapper::convertToDTO);
             }, "Error fetching submissions for assignment ID: " + assignmentId);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to fetch submissions: Assignment not found with ID {}: {}", assignmentId, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -233,7 +227,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return null;
             }, "Error removing grade from submission ID: " + submissionId);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;

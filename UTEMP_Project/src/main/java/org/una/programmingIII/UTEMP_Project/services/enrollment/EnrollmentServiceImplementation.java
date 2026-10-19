@@ -117,7 +117,6 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             Enrollment enrollment = getEntityById(id, enrollmentRepository, "Enrollment");
             return Optional.of(enrollmentMapper.convertToDTO(enrollment));
         } catch (ResourceNotFoundException e) {
-            logger.warn("Enrollment not found: {}", e.getMessage());
             throw e; // Re-throwing to let the global exception handler handle this
         } catch (DomainException e) {
             throw e;
@@ -139,7 +138,6 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
 
             return enrollmentMapper.convertToDTO(savedEnrollment);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to create enrollment: {}", e.getMessage());
             throw e;
         } catch (DataIntegrityViolationException e) {
             logger.warn("Enrollment rejected by the database: {}", e.getMostSpecificCause().getMessage());
@@ -163,7 +161,6 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             updateEnrollmentFields(existingEnrollment, enrollmentDTO);
             return Optional.of(enrollmentMapper.convertToDTO(enrollmentRepository.save(existingEnrollment)));
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update enrollment: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -180,7 +177,6 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             Enrollment enrollment = getEntityById(id, enrollmentRepository, "Enrollment");
             enrollmentRepository.delete(enrollment);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete enrollment: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;

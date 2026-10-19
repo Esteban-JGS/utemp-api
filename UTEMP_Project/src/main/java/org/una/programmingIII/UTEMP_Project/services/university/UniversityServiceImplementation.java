@@ -79,7 +79,6 @@ public class UniversityServiceImplementation implements UniversityService {
                 return Optional.of(universityMapper.convertToDTO(university));
             }, "Error fetching university by ID: " + id);
         } catch (ResourceNotFoundException e) {
-            logger.warn("University not found: {}", e.getMessage());
             return Optional.empty();
         } catch (DomainException e) {
             throw e;

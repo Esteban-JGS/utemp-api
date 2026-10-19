@@ -113,7 +113,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
                 return Optional.of(userMapper.convertToDTO(user));
             }, "Error fetching user by ID");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -132,7 +131,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
                 return Optional.ofNullable(user).map(userMapper::convertToDTO);
             }, "Error fetching user by identification number");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found with identification number {}: {}", identificationNumber, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -380,9 +378,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
-            throw e;
         } catch (DomainException | DataAccessException e) {
             throw e;
         } catch (Exception e) {

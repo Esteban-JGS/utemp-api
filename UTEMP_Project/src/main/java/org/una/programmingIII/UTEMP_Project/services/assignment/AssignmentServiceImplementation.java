@@ -95,7 +95,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 return Optional.of(assignmentMapper.convertToDTO(assignment));
             }, "Error fetching assignment by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Assignment with ID {} not found: {}", id, e.getMessage());
             throw e;
         } catch (DataAccessException e) {
             logger.error("Database access error occurred while fetching assignment by ID {}: {}", id, e.getMessage());
@@ -122,7 +121,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 Assignment savedAssignment = assignmentRepository.save(assignment);
                 return assignmentMapper.convertToDTO(savedAssignment);
             } catch (ResourceNotFoundException e) {
-                logger.error("Error creating assignment: Course with ID {} not found", assignmentDTO.getCourse().getId());
                 throw e;
             } catch (InvalidDataException e) {
                 logger.error("Error creating assignment: Invalid data provided - {}", e.getMessage());
@@ -149,7 +147,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 Assignment updatedAssignment = assignmentRepository.save(existingAssignment);
                 return Optional.of(assignmentMapper.convertToDTO(updatedAssignment));
             } catch (ResourceNotFoundException e) {
-                logger.error("Error updating assignment: Assignment with ID {} not found", id);
                 throw e;
             } catch (InvalidDataException e) {
                 logger.error("Error updating assignment: Invalid data provided - {}", e.getMessage());
@@ -173,7 +170,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 assignmentRepository.delete(assignment);
                 return null;
             } catch (ResourceNotFoundException e) {
-                logger.error("Error deleting assignment: Assignment with ID {} not found", id);
                 throw e;
             } catch (DomainException e) {
                 throw e;
@@ -220,7 +216,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 logger.info("Submission added successfully for assignment ID: {}", assignmentId);
                 return submissionMapper.convertToDTO(savedSubmission);
             } catch (ResourceNotFoundException e) {
-                logger.error("Error adding submission: Assignment with ID {} not found", assignmentId);
                 throw e;
             } catch (InvalidDataException e) {
                 logger.error("Invalid submission data: {}", e.getMessage());
@@ -250,7 +245,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
                 submissionRepository.delete(submission);
                 return null;
             } catch (ResourceNotFoundException e) {
-                logger.error("Error deleting submission: Submission with ID {} not found", submissionId);
                 throw e;
             } catch (DomainException e) {
                 throw e;
@@ -283,9 +277,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("{}: {}", errorMessage, e.getMessage());
-            throw e;
         } catch (DomainException | DataAccessException e) {
             throw e;
         } catch (Exception e) {

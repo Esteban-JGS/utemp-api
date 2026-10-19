@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.una.programmingIII.UTEMP_Project.dtos.FacultyDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UniversityDTO;
+import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.services.university.UniversityService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
 import org.una.programmingIII.UTEMP_Project.utils.PageDTO;
@@ -112,10 +113,7 @@ public class UniversityController {
         logger.info("Fetching university with ID: {}", id);
         Optional<UniversityDTO> university = universityService.getUniversityById(id);
         return university.map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    logger.warn("University with ID: {} not found", id);
-                    return ResponseEntity.notFound().build();
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("University", id));
     }
 
     @Operation(

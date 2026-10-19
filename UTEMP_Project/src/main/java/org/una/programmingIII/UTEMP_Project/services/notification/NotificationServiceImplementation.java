@@ -80,7 +80,6 @@ public class NotificationServiceImplementation implements NotificationService {
                 return Optional.of(notificationMapper.convertToDTO(notification));
             }, "Error fetching notification by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to fetch notification: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -101,7 +100,6 @@ public class NotificationServiceImplementation implements NotificationService {
             return executeWithLogging(() -> notificationMapper.convertToDTO(notificationRepository.save(notification)),
                     "Error creating notification");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to create notification: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -122,7 +120,6 @@ public class NotificationServiceImplementation implements NotificationService {
             return executeWithLogging(() -> Optional.of(notificationMapper.convertToDTO(notificationRepository.save(existingNotification))),
                     "Error updating notification");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update notification: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -142,7 +139,6 @@ public class NotificationServiceImplementation implements NotificationService {
                 return null;
             }, "Error deleting notification");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete notification: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -185,7 +181,6 @@ public class NotificationServiceImplementation implements NotificationService {
                 return null;
             }, "Error adding notification to user");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to add notification to user {}: {}", userId, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -210,7 +205,6 @@ public class NotificationServiceImplementation implements NotificationService {
                 logger.warn("Notification {} not found in user's notifications", notificationId);
             }
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove notification from user {}: {}", userId, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -230,7 +224,6 @@ public class NotificationServiceImplementation implements NotificationService {
             executeWithLogging(() -> notificationRepository.save(notification),
                     "Error marking notification as read");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to mark notification as read: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -268,7 +261,6 @@ public class NotificationServiceImplementation implements NotificationService {
             // Agrega la notificación al usuario
             addNotificationToUser(userId, notification);
         } catch (ResourceNotFoundException e) {
-            logger.error("Error: {}", e.getMessage());
             throw e; // Lanza excepción si el usuario no se encuentra
         } catch (DomainException e) {
             throw e;
