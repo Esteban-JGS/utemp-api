@@ -107,6 +107,24 @@ class EmailNotificationObserverTest {
         assertTrue(htmlMessage.contains("<p>" + message + "</p>"));
     }
 
+    @Test
+    void testCreateHtmlMessage_EscapesTheMessage() {
+        // Messages include names typed by users, such as course and assignment titles
+        String htmlMessage = emailNotificationObserver.createHtmlMessage("NEW_ASSIGNMENT", "Assignment '<b>Lab</b>' & more");
+
+        assertTrue(htmlMessage.contains("<p>Assignment &#39;&lt;b&gt;Lab&lt;/b&gt;&#39; &amp; more</p>"));
+        assertFalse(htmlMessage.contains("<b>Lab</b>"));
+    }
+
+    @Test
+    void testCreateHtmlMessage_CreditsTheWholeTeam() {
+        String htmlMessage = emailNotificationObserver.createHtmlMessage("USER_ENROLLED", "Welcome");
+
+        assertTrue(htmlMessage.contains("https://github.com/Esteban-JGS"));
+        assertTrue(htmlMessage.contains("https://github.com/JuanCaUNA"));
+        assertTrue(htmlMessage.contains("Noemí Murillo"));
+    }
+
     private static String findTextBody(Object content) throws MessagingException, IOException {
         if (content instanceof String text) {
             return text;

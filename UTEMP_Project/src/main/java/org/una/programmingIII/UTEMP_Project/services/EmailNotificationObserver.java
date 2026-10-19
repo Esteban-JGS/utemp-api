@@ -9,6 +9,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 import org.una.programmingIII.UTEMP_Project.observers.Observer;
 
 import java.util.Map;
@@ -68,11 +69,12 @@ public class EmailNotificationObserver implements Observer {
                 + "<body>"
                 + "<div class='content'>"
                 + "<h1>Welcome to our UTEMP online platform!</h1>"
-                + "<p>" + message + "</p>"
+                // Messages include names typed by users (courses, assignments), so they are escaped
+                + "<p>" + HtmlUtils.htmlEscape(message) + "</p>"
                 + "<hr>"
                 + "<p class='footer'>This email was generated automatically. Please do not reply to this message.</p>"
                 + "<div class='developers'>"
-                + "<p>Developed by: <a href='https://github.com/EstebanJavierGranadosSibaja' target='_blank'>Esteban Javier Granados Sibaja</a> and <a href='https://github.com/JuanCaUNA' target='_blank'>Juan Carlos Camacho Solano</a></p>"
+                + "<p>Developed by: <a href='https://github.com/Esteban-JGS' target='_blank'>Esteban Javier Granados Sibaja</a>, <a href='https://github.com/JuanCaUNA' target='_blank'>Juan Carlos Camacho Solano</a> and Noemí Murillo</p>"
                 + "</div>"
                 + "</div>"
                 + "</body>"
@@ -88,7 +90,7 @@ public class EmailNotificationObserver implements Observer {
 
         MimeMessage message = mailSender.createMimeMessage();
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, true);
