@@ -146,8 +146,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             logger.warn("Failed to create enrollment: {}", e.getMessage());
             throw e;
         } catch (DataIntegrityViolationException e) {
-            logger.error("Data integrity violation while creating enrollment: {}", e.getMessage());
-            throw new ServiceException("Enrollment data is invalid or already exists", e);
+            logger.warn("Enrollment rejected by the database: {}", e.getMostSpecificCause().getMessage());
+            throw e;
         } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
