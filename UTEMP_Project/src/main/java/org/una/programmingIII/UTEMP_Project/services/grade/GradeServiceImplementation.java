@@ -75,7 +75,6 @@ public class GradeServiceImplementation implements GradeService {
                 return Optional.of(gradeMapper.convertToDTO(grade));
             }, "Error fetching grade by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to fetch grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -95,7 +94,6 @@ public class GradeServiceImplementation implements GradeService {
             return executeWithLogging(() -> gradeMapper.convertToDTO(gradeRepository.save(grade)),
                     "Error creating grade");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to create grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -117,7 +115,6 @@ public class GradeServiceImplementation implements GradeService {
             return executeWithLogging(() -> Optional.of(gradeMapper.convertToDTO(gradeRepository.save(existingGrade))),
                     "Error updating grade");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -138,7 +135,6 @@ public class GradeServiceImplementation implements GradeService {
                 return null;
             }, "Error deleting grade");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -167,7 +163,7 @@ public class GradeServiceImplementation implements GradeService {
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return getEntityById(id, repository)

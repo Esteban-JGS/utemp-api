@@ -372,7 +372,7 @@ public class CourseController {
                     description = "Successfully retrieved courses",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class), // Cambia a Page si es un PageDTO<CourseDTO>
+                            schema = @Schema(implementation = Page.class),
                             examples = @ExampleObject(
                                     value = """
                                             {
@@ -496,7 +496,7 @@ public class CourseController {
                     description = "Successfully retrieved courses",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class), // Cambia a Page si es un PageDTO<CourseDTO>
+                            schema = @Schema(implementation = Page.class),
                             examples = @ExampleObject(
                                     value = """
                                             {

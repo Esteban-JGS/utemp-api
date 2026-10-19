@@ -10,7 +10,7 @@ import lombok.ToString;
 public class ApiResponse<T> {
     private T data;
     private int statusCode;
-    private String message; // Cambiar a minúscula para seguir las convenciones de Java
+    private String message;
 
     public ApiResponse() {
         data = null;
@@ -21,14 +21,14 @@ public class ApiResponse<T> {
 
     public ApiResponse(T data) {
         this.data = data;
-        this.statusCode = 200; // Código de estado por defecto
-        this.message = ""; // No hay mensaje por defecto
+        this.statusCode = 200;
+        this.message = "";
     }
 
     public ApiResponse(int statusCode, String errorMessage) {
         this.statusCode = statusCode;
         this.message = errorMessage;
-        this.data = null; // Sin datos
+        this.data = null;
     }
 
     public static <T> ApiResponse<T> fromException(int statusCode, String errorMessage) {

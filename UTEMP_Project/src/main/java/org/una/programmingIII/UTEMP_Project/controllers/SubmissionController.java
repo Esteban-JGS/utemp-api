@@ -8,8 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +19,7 @@ import org.una.programmingIII.UTEMP_Project.controllers.request.ManualReviewRequ
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
+import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
 import org.una.programmingIII.UTEMP_Project.services.submission.SubmissionService;
 import org.una.programmingIII.UTEMP_Project.utils.PageConverter;
@@ -33,7 +32,6 @@ import java.util.Optional;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
-    private final Logger logger = LoggerFactory.getLogger(SubmissionController.class);
 
     @Autowired
     public SubmissionController(SubmissionService submissionService) {
@@ -106,10 +104,7 @@ public class SubmissionController {
             @Parameter(description = "ID of the submission to retrieve", required = true) @PathVariable Long id) {
         Optional<SubmissionDTO> submissionDTO = submissionService.getSubmissionById(id);
         return submissionDTO.map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    logger.warn("1Submission not found with id: {}", id);
-                    return ResponseEntity.notFound().build();
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Submission", id));
     }
 
 
@@ -147,7 +142,6 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<SubmissionDTO> createSubmission(
             @Valid @RequestBody SubmissionDTO submissionDTO) {
-        // Llamada al servicio para crear la submission
         SubmissionDTO createdSubmission = submissionService.createSubmission(submissionDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
     }
@@ -197,10 +191,7 @@ public class SubmissionController {
             @Valid @RequestBody SubmissionDTO submissionDTO) {
         Optional<SubmissionDTO> updatedSubmission = submissionService.updateSubmission(id, submissionDTO);
         return updatedSubmission.map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    logger.warn("Submission not found with id: {}", id);
-                    return ResponseEntity.notFound().build();
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Submission", id));
     }
 
     @Operation(

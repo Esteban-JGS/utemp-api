@@ -72,8 +72,8 @@ public class CourseDTO {
                 ", state=" + state +
                 ", createdAt=" + createdAt +
                 ", lastUpdate=" + lastUpdate +
-                ", teacher=" + (teacher != null ? teacher.getId() : "null") +  // Solo mostramos el ID del profesor
-                ", department=" + (department != null ? department.getId() : "null") +  // Solo mostramos el ID del departamento
+                ", teacher=" + (teacher != null ? teacher.getId() : "null") +  // Only the id, to keep the output short
+                ", department=" + (department != null ? department.getId() : "null") +
                 '}';
     }
 }

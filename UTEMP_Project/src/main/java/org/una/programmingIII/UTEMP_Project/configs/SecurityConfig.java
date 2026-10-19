@@ -20,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.una.programmingIII.UTEMP_Project.security.filters.JwtRequestFilter;
 import org.una.programmingIII.UTEMP_Project.security.utils.CustomAccessDeniedHandler;
 import org.una.programmingIII.UTEMP_Project.security.utils.CustomAuthenticationEntryPoint;
-import org.una.programmingIII.UTEMP_Project.security.utils.jwtTokenProvider.JwtTokenProvider;
+import org.una.programmingIII.UTEMP_Project.security.utils.JwtTokenProvider;
 import org.una.programmingIII.UTEMP_Project.services.CustomUserDetailsService;
 
 import java.util.Arrays;
@@ -32,13 +32,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final JwtTokenProvider jwtTokenProviderService;
+    private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public SecurityConfig(CustomUserDetailsService userDetailsService, JwtTokenProvider jwtTokenProviderService, PasswordEncoder passwordEncoder) {
+    public SecurityConfig(CustomUserDetailsService userDetailsService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
         this.userDetailsService = userDetailsService;
-        this.jwtTokenProviderService = jwtTokenProviderService;
+        this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -63,7 +63,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler(new CustomAccessDeniedHandler())
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .addFilterBefore(new JwtRequestFilter(jwtTokenProviderService, userDetailsService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtRequestFilter(jwtTokenProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

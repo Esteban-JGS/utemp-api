@@ -83,7 +83,6 @@ public class FacultyServiceImplementation implements FacultyService {
                 return Optional.of(facultyMapper.convertToDTO(faculty));
             }, "Error fetching faculty by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to fetch faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -105,7 +104,6 @@ public class FacultyServiceImplementation implements FacultyService {
                     "Error creating faculty"
             );
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to create faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -128,7 +126,6 @@ public class FacultyServiceImplementation implements FacultyService {
                     "Error updating faculty"
             );
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -148,7 +145,6 @@ public class FacultyServiceImplementation implements FacultyService {
                 return null;
             }, "Error deleting faculty");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -192,7 +188,6 @@ public class FacultyServiceImplementation implements FacultyService {
                 return null;
             }, "Error adding department to faculty");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to add department to faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -220,7 +215,6 @@ public class FacultyServiceImplementation implements FacultyService {
                 throw new ResourceNotFoundException("Department in this faculty", departmentId);
             }
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove department from faculty: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -230,7 +224,7 @@ public class FacultyServiceImplementation implements FacultyService {
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

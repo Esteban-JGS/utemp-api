@@ -85,7 +85,7 @@ public class UserDTO {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
-                ", password='" + (password != null ? "*****" : "null") + '\'' +  // Ocultamos la contraseña
+                ", password='" + (password != null ? "*****" : "null") + '\'' +  // Never print the password
                 ", identificationNumber='" + identificationNumber + '\'' +
                 ", state=" + state +
                 ", role=" + role +

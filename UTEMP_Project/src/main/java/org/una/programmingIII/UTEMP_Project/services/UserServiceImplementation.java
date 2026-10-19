@@ -50,10 +50,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     private final UserValidator userValidator;
 
     private final GenericMapper<User, UserDTO> userMapper;
-    private final GenericMapper<Notification, NotificationDTO> notificationMapper;
     private final GenericMapper<Enrollment, EnrollmentDTO> enrollmentMapper;
     private final GenericMapper<Course, CourseDTO> courseMapper;
-    private final GenericMapper<Submission, SubmissionDTO> submissionMapper;
 
     @Autowired
     public UserServiceImplementation(
@@ -66,10 +64,8 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             NotificationService notificationService) {
 
         this.userMapper = mapperFactory.createMapper(User.class, UserDTO.class);
-        this.notificationMapper = mapperFactory.createMapper(Notification.class, NotificationDTO.class);
         this.enrollmentMapper = mapperFactory.createMapper(Enrollment.class, EnrollmentDTO.class);
         this.courseMapper = mapperFactory.createMapper(Course.class, CourseDTO.class);
-        this.submissionMapper = mapperFactory.createMapper(Submission.class, SubmissionDTO.class);
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
@@ -117,7 +113,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
                 return Optional.of(userMapper.convertToDTO(user));
             }, "Error fetching user by ID");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -136,7 +131,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
                 return Optional.ofNullable(user).map(userMapper::convertToDTO);
             }, "Error fetching user by identification number");
         } catch (ResourceNotFoundException e) {
-            logger.error("User not found with identification number {}: {}", identificationNumber, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -192,7 +186,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         Optional<User> optionalUser = userRepository.findById(id);
         User existingUser = optionalUser.orElseThrow(() -> new ResourceNotFoundException("User", id));
         updateUserFields(existingUser, userDTO);
-        updateUserRelations(existingUser, userDTO);
 
         return executeWithLogging(() -> Optional.of(userMapper.convertToDTO(userRepository.save(existingUser))),
                 "Error updating user");
@@ -329,7 +322,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error unrolling user from course");
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private void validateUser(UserDTO userDTO) {
         userValidator.validate(userDTO);
@@ -343,7 +336,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }
     }
 
-    //TODO que es ?
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)
                 .orElseThrow(() -> new ResourceNotFoundException(entityName, id));
@@ -383,28 +375,9 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         existingUser.setLastUpdate(LocalDateTime.now());
     }
 
-    private void updateUserRelations(User existingUser, UserDTO userDTO) {
-        updateUserRelation(existingUser.getUserEnrollments(), userDTO.getUserEnrollments(), enrollmentMapper);
-        updateUserRelation(existingUser.getCoursesTeaching(), userDTO.getCoursesTeaching(), courseMapper);
-        updateUserRelation(existingUser.getNotifications(), userDTO.getNotifications(), notificationMapper);
-        updateUserRelation(existingUser.getSubmissions(), userDTO.getSubmissions(), submissionMapper);
-    }
-
-    private <T, D> void updateUserRelation(List<T> existingList, List<D> dtoList, GenericMapper<T, D> mapper) {
-        List<T> newList = mapper.convertToEntityList(dtoList);
-        logger.info("Updating relations for {}: existing {}, new {}", existingList.getClass().getSimpleName(), existingList.size(), newList.size());
-        existingList.retainAll(newList);
-        newList.removeAll(existingList);
-        existingList.addAll(newList);
-        logger.info("Updated relations: now {}", existingList.size());
-    }
-
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {
         try {
             return action.get();
-        } catch (ResourceNotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
-            throw e;
         } catch (DomainException | DataAccessException e) {
             throw e;
         } catch (Exception e) {

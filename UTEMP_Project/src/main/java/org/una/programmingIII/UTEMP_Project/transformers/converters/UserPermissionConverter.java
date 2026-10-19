@@ -18,11 +18,9 @@ public class UserPermissionConverter implements AttributeConverter<List<UserPerm
         if (permissions == null || permissions.isEmpty()) {
             return "";
         }
-        String result = permissions.stream()
+        return permissions.stream()
                 .map(UserPermission::name)
                 .collect(Collectors.joining(","));
-//        System.out.println("Converting permissions to DB column: " + result);
-        return result;
     }
 
     public List<UserPermission> convertToEntityAttribute(String dbData) {

@@ -105,7 +105,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
                 return Optional.of(courseMapper.convertToDTO(course));
             }, "Error fetching course by ID");
         } catch (ResourceNotFoundException e) {
-            logger.error("Course with ID {} not found: {}", id, e.getMessage());
             return Optional.empty();
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course ID {}: {}", id, e.getMessage());
@@ -128,7 +127,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
             return executeWithLogging(() -> courseMapper.convertToDTO(courseRepository.save(course)),
                     "Error creating course");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while creating course: {}", e.getMessage());
             throw new InvalidDataException("Failed to create course: " + e.getMessage());
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course: {}", e.getMessage());
@@ -152,7 +150,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
             return executeWithLogging(() -> Optional.of(courseMapper.convertToDTO(courseRepository.save(existingCourse))),
                     "Error updating course");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while updating course: {}", e.getMessage());
             throw e;
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for course update: {}", e.getMessage());
@@ -177,7 +174,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
             }, "Error deleting course");
 
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while deleting course: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -246,7 +242,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
                 return null;
             }, "Error adding assignment to course");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while adding assignment to course: {}", e.getMessage());
             throw e;
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for assignment: {}", e.getMessage());
@@ -278,7 +273,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
                 throw new ResourceNotFoundException("Assignment in this course", courseId);
             }
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while removing assignment from course: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -288,7 +282,7 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

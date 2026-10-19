@@ -79,7 +79,6 @@ public class UniversityServiceImplementation implements UniversityService {
                 return Optional.of(universityMapper.convertToDTO(university));
             }, "Error fetching university by ID: " + id);
         } catch (ResourceNotFoundException e) {
-            logger.warn("University not found: {}", e.getMessage());
             return Optional.empty();
         } catch (DomainException e) {
             throw e;
@@ -193,7 +192,7 @@ public class UniversityServiceImplementation implements UniversityService {
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

@@ -3,7 +3,10 @@ package org.una.programmingIII.UTEMP_Project.services;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.una.programmingIII.UTEMP_Project.models.User;
+import org.una.programmingIII.UTEMP_Project.models.UserPermission;
 import org.una.programmingIII.UTEMP_Project.models.UserState;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,10 +39,11 @@ class CustomUserDetailsTest {
 
     @Test
     void getAuthorities() {
-        // Asignar permisos de prueba
-        // testUser.setPermissions(List.of(UserPermission.MANAGE_USERS));
+        testUser.setPermissions(List.of(UserPermission.MANAGE_USERS, UserPermission.MANAGE_COURSES));
         CustomUserDetails customUserDetails = new CustomUserDetails(testUser);
-        assertNotNull(customUserDetails.getAuthorities());
+        // Each permission becomes an authority with the same name, which is what @PreAuthorize checks
+        assertEquals(List.of("MANAGE_USERS", "MANAGE_COURSES"),
+                customUserDetails.getAuthorities().stream().map(Object::toString).toList());
     }
 
     @Test

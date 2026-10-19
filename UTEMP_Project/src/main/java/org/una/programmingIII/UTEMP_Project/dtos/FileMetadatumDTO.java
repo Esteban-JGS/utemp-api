@@ -34,7 +34,7 @@ public class FileMetadatumDTO {
     private String fileName;
 
     @NotNull(message = "File size must not be null")
-    @Min(value = 1, message = "El tamaño del archivo debe ser mayor que 0.")
+    @Min(value = 1, message = "File size must be greater than 0")
     private Long fileSize;
 
     @Size(max = 100, message = "File type must be at most 100 characters long")
@@ -49,22 +49,21 @@ public class FileMetadatumDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
     private LocalDateTime lastUpdate;
 
-    // Nuevos campos para manejo de fragmentos
-    private byte[] fileChunk; // Fragmento del archivo
-    private int chunkIndex; // Índice del fragmento
-    private int totalChunks; // Número total de fragmentos
+    // Used by POST /files/receive-chunk
+    private byte[] fileChunk;
+    private int chunkIndex;
+    private int totalChunks;
 
     @Override
     public String toString() {
-        return "CourseDTO{" +
+        return "FileMetadatumDTO{" +
                 "id=" + id +
-                ", name='" + fileSize + '\'' +
-                ", description='" + fileName + '\'' +
-                ", state=" + fileType +
+                ", fileName='" + fileName + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileType='" + fileType + '\'' +
                 ", createdAt=" + createdAt +
                 ", lastUpdate=" + lastUpdate +
-                ", teacher=" + storagePath +
-                ", department=" + (student != null ? student.getId() : "null") +
+                ", studentId=" + (student != null ? student.getId() : "null") +
                 '}';
     }
 }

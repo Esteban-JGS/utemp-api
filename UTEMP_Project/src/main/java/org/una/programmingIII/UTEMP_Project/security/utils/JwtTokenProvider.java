@@ -95,14 +95,6 @@ public class JwtTokenProvider {
         return parseClaims(token, claims -> claims.get("id", Long.class));
     }
 
-    public String getNameFromToken(String token) {
-        return parseClaims(token, claims -> claims.get("name", String.class));
-    }
-
-    public String getEmailFromToken(String token) {
-        return parseClaims(token, claims -> claims.get("email", String.class));
-    }
-
     public List<UserPermission> getPermissionsFromToken(String token) {
         return parseClaims(token, claims -> handleJsonProcessing(
                 () -> objectMapper.readValue(claims.get("permissions", String.class), new TypeReference<List<UserPermission>>() {

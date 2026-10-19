@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TokenResponseDTO {
-    private String accessToken;
+    // Same name as in the login response
+    private String token;
     private String refreshToken;
 }

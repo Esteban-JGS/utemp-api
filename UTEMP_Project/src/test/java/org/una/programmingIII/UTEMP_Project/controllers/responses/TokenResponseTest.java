@@ -23,13 +23,13 @@ class TokenResponseTest {
 
         assertNotNull(tokenResponse.getToken(), "El token no debe ser nulo");
         assertNotNull(tokenResponse.getTokenType(), "El tipo de token no debe ser nulo");
-        assertNotNull(tokenResponse.getUser(), "El usuario no debe ser nulo");
+        assertNotNull(tokenResponse.getUser(), "User should not be null");
         assertEquals("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", tokenResponse.getToken(), "El token no coincide");
         assertEquals("Bearer", tokenResponse.getTokenType(), "El tipo de token no coincide");
         assertEquals(3600, tokenResponse.getExpiresIn(), "El valor de 'expiresIn' no coincide");
 
-        assertEquals("John Doe", tokenResponse.getUser().getName(), "El nombre del usuario no coincide");
-        assertEquals("12345", tokenResponse.getUser().getIdentificationNumber(), "El número de identificación del usuario no coincide");
+        assertEquals("John Doe", tokenResponse.getUser().getName(), "User name does not match");
+        assertEquals("12345", tokenResponse.getUser().getIdentificationNumber(), "User identification number does not match");
     }
 
     @Test
@@ -42,7 +42,7 @@ class TokenResponseTest {
                 .build();
 
         assertNull(tokenResponse.getToken(), "El token no debe ser nulo");
-        assertNull(tokenResponse.getUser(), "El usuario no debe ser nulo");
+        assertNull(tokenResponse.getUser(), "User should be null");
     }
 
     @Test
@@ -62,8 +62,8 @@ class TokenResponseTest {
         assertEquals("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", tokenResponse.getToken(), "El token no coincide");
         assertEquals("Bearer", tokenResponse.getTokenType(), "El tipo de token no coincide");
         assertEquals(3600, tokenResponse.getExpiresIn(), "El valor de 'expiresIn' no coincide");
-        assertNotNull(tokenResponse.getUser(), "El usuario no debe ser nulo");
-        assertEquals("John Doe", tokenResponse.getUser().getName(), "El nombre del usuario no coincide");
+        assertNotNull(tokenResponse.getUser(), "User should not be null");
+        assertEquals("John Doe", tokenResponse.getUser().getName(), "User name does not match");
     }
 
 

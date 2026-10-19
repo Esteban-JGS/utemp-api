@@ -87,7 +87,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return Optional.of(submissionMapper.convertToDTO(submission));
             }, "Error fetching submission by ID");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -102,49 +101,25 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
     public SubmissionDTO createSubmission(@Valid SubmissionDTO submissionDTO) {
 
         try {
-            // Convierte el DTO a entidad
-//            System.out.println(submissionDTO.toString());
             Submission submission = submissionMapper.convertToEntity(submissionDTO);
-            submission.setFileName("desconocido");
+            submission.setFileName("pending-upload");
             User user = getEntityById(submissionDTO.getStudent().getId(), userRepository, "User");
 
             submission.setAssignment(getEntityById(submissionDTO.getAssignment().getId(), assignmentRepository, "Assignment"));
             submission.setStudent(user);
 
             submission = submissionRepository.save(submission);
-
-//            FileMetadatum file = FileMetadatum.builder()
-//                    .submission(submission)
-//                    .student(user)
-//                    .fileName("desconocido")
-//                    .fileType("desconocido")
-//                    .storagePath(fileBasePath)
-//                    .fileSize(0L)
-//                    .build();
-
-
-//            List<FileMetadatum> list = new ArrayList<>();
-
-//            list.add(fileMetadataRepository.save(file));
-
-//            submission.setFileMetadata(list);
-
-            // Guarda la entidad Submission y convierte la entidad a DTO para devolverla
             Submission finalSubmission = submission;
 
             return executeWithLogging(() -> submissionMapper.convertToDTO(finalSubmission), "Error creating submission");
         } catch (ResourceNotFoundException e) {
-            // Manejo de excepciones cuando no se encuentra el Assignment
-            logger.warn("Failed to create submission: Assignment not found with ID {}: {}", submissionDTO.getAssignment().getId(), e.getMessage());
             throw e;
         } catch (ValidationException e) {
-            // Manejo de excepciones de validación
             logger.warn("Validation error while creating submission: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
-            // Manejo de excepciones generales
             logger.error("Error creating submission: {}", e.getMessage());
             throw new ServiceException("Error creating submission", e);
         }
@@ -160,7 +135,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             return executeWithLogging(() -> Optional.of(submissionMapper.convertToDTO(submissionRepository.save(existingSubmission))),
                     "Error updating submission");
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to update submission: Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (ValidationException e) {
             logger.warn("Validation error while updating submission: {}", e.getMessage());
@@ -184,7 +158,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             }, "Error deleting submission");
 
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to delete submission: Submission not found with ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -206,7 +179,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return submissions.map(submissionMapper::convertToDTO);
             }, "Error fetching submissions for assignment ID: " + assignmentId);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to fetch submissions: Assignment not found with ID {}: {}", assignmentId, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -253,7 +225,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
                 return null;
             }, "Error removing grade from submission ID: " + submissionId);
         } catch (ResourceNotFoundException e) {
-            logger.warn("Failed to remove grade: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -263,7 +234,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

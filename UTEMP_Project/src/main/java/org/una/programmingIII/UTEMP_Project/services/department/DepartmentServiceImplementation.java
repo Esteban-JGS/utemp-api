@@ -83,7 +83,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
                 return Optional.of(departmentMapper.convertToDTO(department));
             }, "Error fetching department by ID");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while fetching department ID {}: {}", id, e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -102,7 +101,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
             return executeWithLogging(() -> departmentMapper.convertToDTO(departmentRepository.save(department)),
                     "Error creating department");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while creating department: {}", e.getMessage());
             throw e;
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for creating department: {}", e.getMessage());
@@ -127,7 +125,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
             return executeWithLogging(() -> Optional.of(departmentMapper.convertToDTO(departmentRepository.save(existingDepartment))),
                     "Error updating department");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while updating department: {}", e.getMessage());
             throw e;
         } catch (InvalidDataException e) {
             logger.error("Invalid data provided for updating department: {}", e.getMessage());
@@ -150,7 +147,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
                 return null;
             }, "Error deleting department");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while deleting department: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -194,7 +190,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
                 return null;
             }, "Error adding course to department");
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while adding course to department: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -222,7 +217,6 @@ public class DepartmentServiceImplementation implements DepartmentService {
                 throw new ResourceNotFoundException("Course in this department", courseId);
             }
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found while removing course from department: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
@@ -232,7 +226,7 @@ public class DepartmentServiceImplementation implements DepartmentService {
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

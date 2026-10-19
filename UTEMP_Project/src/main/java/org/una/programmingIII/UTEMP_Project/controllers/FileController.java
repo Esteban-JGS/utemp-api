@@ -72,7 +72,7 @@ public class FileController {
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id,
                                                  @AuthenticationPrincipal CustomUserDetails principal) {
         StoredFile file = fileService.getFileForDownload(id, principal.getUser());
-        logger.info("Descargando archivo con ID {} ({} bytes)", id, file.size());
+        logger.info("Downloading file with ID {} ({} bytes)", id, file.size());
 
         // ContentDisposition encodes the original name safely (no header injection through the file name)
         ContentDisposition disposition = ContentDisposition.attachment()
