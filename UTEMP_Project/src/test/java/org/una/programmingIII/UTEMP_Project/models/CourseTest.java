@@ -67,16 +67,12 @@ public class CourseTest {
 
     @Test
     void testPreUpdate() {
-        LocalDateTime previousUpdate = course.getLastUpdate();
-
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // An older value instead of waiting, so the test does not depend on the clock resolution
+        LocalDateTime previousUpdate = LocalDateTime.now().minusDays(1);
+        course.setLastUpdate(previousUpdate);
 
         course.onUpdate();
-        assertNotEquals(previousUpdate, course.getLastUpdate(), "lastUpdate no se actualizó correctamente");
+        assertTrue(course.getLastUpdate().isAfter(previousUpdate), "lastUpdate should be updated on update call");
     }
 
 

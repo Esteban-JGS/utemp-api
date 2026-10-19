@@ -84,14 +84,14 @@ class AssignmentTest {
     }
 
     @Test
-    void testPreUpdate() throws InterruptedException {
+    void testPreUpdate() {
         assignment.onCreate();
-        LocalDateTime previousUpdate = assignment.getLastUpdate();
-
-        Thread.sleep(10);
+        // An older value instead of waiting, so the test does not depend on the clock resolution
+        LocalDateTime previousUpdate = LocalDateTime.now().minusDays(1);
+        assignment.setLastUpdate(previousUpdate);
 
         assignment.onUpdate();
-        assertNotEquals(previousUpdate, assignment.getLastUpdate(), "lastUpdate should be updated on update call");
+        assertTrue(assignment.getLastUpdate().isAfter(previousUpdate), "lastUpdate should be updated on update call");
     }
 
 

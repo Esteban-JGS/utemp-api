@@ -36,7 +36,6 @@ class CustomUserDetailsServiceTest {
         testUser.setEmail("testuser@example.com");
         testUser.setPassword("password");
         testUser.setState(UserState.ACTIVE);
-        // Asigna permisos si es necesario
     }
 
     @Test
@@ -52,15 +51,12 @@ class CustomUserDetailsServiceTest {
 
     @Test
     void loadUserByUsername_UserNotFound() {
-        // Mockear el repositorio para devolver null
         when(userRepository.findByIdentificationNumber(testUser.getIdentificationNumber())).thenReturn(null);
 
-        // Probar la excepción
         Exception exception = assertThrows(UsernameNotFoundException.class, () -> {
             customUserDetailsService.loadUserByUsername(testUser.getIdentificationNumber());
         });
 
-        // Verificar que el mensaje de la excepción es el esperado
         assertEquals("User not found with identification number: " + testUser.getIdentificationNumber(), exception.getMessage());
     }
 }
