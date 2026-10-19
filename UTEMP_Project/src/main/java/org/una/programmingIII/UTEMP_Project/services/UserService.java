@@ -39,7 +39,7 @@ public interface UserService {
 
     Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable);
 
-    CompletableFuture<Void> enrollUserToCourse(Long userId, Long courseId);
+    void enrollUserToCourse(Long userId, Long courseId);
 
     void unrollUserFromCourse(Long userId, Long courseId);
 

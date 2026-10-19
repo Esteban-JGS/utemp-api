@@ -307,9 +307,10 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }
     }
 
-    @Async("taskExecutor")
+    // Synchronous so the caller learns whether the enrollment happened; only the emails are sent in the background
+    @Override
     @Transactional
-    public CompletableFuture<Void> enrollUserToCourse(Long userId, Long courseId) {
+    public void enrollUserToCourse(Long userId, Long courseId) {
         logger.info("Starting enrollment process for userId: {} and courseId: {}", userId, courseId);
 
         User user = getEntityById(userId, userRepository, "User");
@@ -323,7 +324,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
 
         if (alreadyEnrolled) {
             logger.warn("User {} is already enrolled in course {}", user.getName(), course.getName());
-            throw new InvalidDataException("User is already enrolled in this course.");
+            throw new ResourceAlreadyExistsException("Enrollment", "user " + userId + " in course " + courseId);
         }
 
         logger.info("Creating new enrollment for User: {} in Course: {}", user.getName(), course.getName());
@@ -342,7 +343,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error enrolling user to course");
 
         logger.info("Enrollment process completed for userId: {} and courseId: {}", userId, courseId);
-        return CompletableFuture.completedFuture(null);
     }
 
 

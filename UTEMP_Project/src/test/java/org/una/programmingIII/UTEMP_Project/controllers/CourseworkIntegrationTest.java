@@ -12,8 +12,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.una.programmingIII.UTEMP_Project.TestcontainersConfiguration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
@@ -30,6 +32,7 @@ class CourseworkIntegrationTest {
     private static final String TEACHER = "200000081";
     private static final String STUDENT_WITHOUT_FILE = "300000081";
     private static final String STUDENT_WITH_FILES = "300000082";
+    private static final String STUDENT_TO_ENROLL = "300000083";
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,6 +69,26 @@ class CourseworkIntegrationTest {
                 .andExpect(jsonPath("$.content[1].id").value(withFiles))
                 // Like the automatic review, the listing points to the latest upload
                 .andExpect(jsonPath("$.content[1].metadataID").value(latestFile));
+    }
+
+    @Test
+    void enrollingAStudentReportsTheRealOutcome() throws Exception {
+        Long studentId = data.user(STUDENT_TO_ENROLL, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        String admin = data.login(TestData.ADMIN);
+
+        mockMvc.perform(post("/utemp/users/{userId}/enrollments/{courseId}", studentId, courseId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isCreated());
+        assertThat(data.count("SELECT COUNT(*) FROM enrollments WHERE course_id = ? AND student_id = ?", courseId, studentId))
+                .isOne();
+
+        mockMvc.perform(post("/utemp/users/{userId}/enrollments/{courseId}", studentId, courseId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/utemp/users/{userId}/enrollments/{courseId}", studentId, Long.MAX_VALUE)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isNotFound());
+        assertThat(data.count("SELECT COUNT(*) FROM enrollments WHERE student_id = ?", studentId)).isOne();
     }
 
     private Long insertFile(Long submissionId, Long studentId) {

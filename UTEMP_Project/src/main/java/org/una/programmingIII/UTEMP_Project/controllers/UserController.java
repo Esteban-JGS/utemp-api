@@ -569,8 +569,8 @@ public class UserController {
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "206",
-                    description = "User enrollment is being processed asynchronously."
+                    responseCode = "201",
+                    description = "The student was enrolled in the course."
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -581,8 +581,8 @@ public class UserController {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid data provided.",
+                    responseCode = "409",
+                    description = "The student is already enrolled in the course.",
                     content = @Content(
                             mediaType = "application/json",
                             examples = @ExampleObject(value = "{\"message\": \"Invalid data provided.\"}")
@@ -603,7 +603,7 @@ public class UserController {
             @PathVariable Long userId,
             @PathVariable Long courseId) {
         userService.enrollUserToCourse(userId, courseId);
-        return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(
