@@ -83,7 +83,7 @@ class JwtTokenProviderTest {
         TokenResponseDTO tokenResponse = jwtTokenProvider.refreshTokens(refreshToken);
 
         assertNotNull(tokenResponse);
-        assertTrue(jwtTokenProvider.validateToken(tokenResponse.getAccessToken(), testUser.getIdentificationNumber()));
+        assertTrue(jwtTokenProvider.validateToken(tokenResponse.getToken(), testUser.getIdentificationNumber()));
         assertNotNull(tokenResponse.getRefreshToken());
     }
 
