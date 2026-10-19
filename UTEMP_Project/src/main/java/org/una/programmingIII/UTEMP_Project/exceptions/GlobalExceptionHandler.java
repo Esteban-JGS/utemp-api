@@ -2,6 +2,7 @@ package org.una.programmingIII.UTEMP_Project.exceptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -76,6 +77,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleInvalidTokenException(InvalidTokenException e) {
         logger.warn("Invalid token: {}", e.getMessage());
         return build(HttpStatus.UNAUTHORIZED, "Invalid token");
+    }
+
+    // A unique or foreign key constraint rejected the change: a duplicate, or deleting a record that is still in use
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        logger.warn("Data integrity violation: {}", e.getMostSpecificCause().getMessage());
+        return build(HttpStatus.CONFLICT, "Conflicts with existing data");
     }
 
     // Thrown by @PreAuthorize and by ownership checks; without this handler it would fall into the generic 500

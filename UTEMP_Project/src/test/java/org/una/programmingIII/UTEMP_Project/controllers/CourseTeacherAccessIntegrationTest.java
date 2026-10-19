@@ -124,8 +124,8 @@ class CourseTeacherAccessIntegrationTest {
                 .andExpect(status().isForbidden());
         mockMvc.perform(put("/utemp/submissions/{id}/{grade}", submissionId, 0.5)
                         .header(HttpHeaders.AUTHORIZATION, bearer(otherTeacher))
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content("Graded by someone else"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comments\": \"Graded by someone else\"}"))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/utemp/submissions/{id}/grades", submissionId)
                         .header(HttpHeaders.AUTHORIZATION, bearer(otherTeacher))
@@ -150,8 +150,8 @@ class CourseTeacherAccessIntegrationTest {
                 .andExpect(status().isOk());
         mockMvc.perform(put("/utemp/submissions/{id}/{grade}", submissionId, 8.5)
                         .header(HttpHeaders.AUTHORIZATION, bearer(teacher))
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content("Well done"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"comments\": \"Well done\"}"))
                 .andExpect(status().isOk());
 
         assertThat(grade()).containsEntry("state", "FINALIZED");

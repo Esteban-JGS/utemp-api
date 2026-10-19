@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
 
 /**
- * Everyday flows of a course: listing submissions, enrolling students and changing the teacher.
+ * Everyday flows of a course: listing and grading submissions, enrolling students and changing the teacher.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,6 +39,10 @@ class CourseworkIntegrationTest {
     private static final String STUDENT_WITHOUT_FILE = "300000081";
     private static final String STUDENT_WITH_FILES = "300000082";
     private static final String STUDENT_TO_ENROLL = "300000083";
+    private static final String STUDENT_TO_GRADE = "300000084";
+    private static final String STUDENT_TO_REVIEW = "300000085";
+    private static final String STUDENT_TO_UPDATE = "300000086";
+    private static final String STUDENT_HANDING_IN = "300000087";
 
     @Autowired
     private MockMvc mockMvc;
@@ -78,6 +82,74 @@ class CourseworkIntegrationTest {
     }
 
     @Test
+    void handingInWorkNotifiesTheTeacherWithTheStudentsName() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_HANDING_IN, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, courseId);
+        Long reportId = data.assignment(courseId, "Report");
+        jdbcTemplate.update("DELETE FROM notifications WHERE user_id = ?", teacherId);
+
+        // The body only carries the student's id; the name has to come from the database
+        mockMvc.perform(post("/utemp/assignments/{id}/submissions", reportId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(STUDENT_HANDING_IN)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"student": {"id": %d}, "assignment": {"id": %d}, "fileName": "report.txt", "state": "SUBMITTED"}
+                                """.formatted(studentId, reportId)))
+                .andExpect(status().isCreated());
+
+        assertThat(jdbcTemplate.queryForList("SELECT message FROM notifications WHERE user_id = ?", String.class, teacherId))
+                .singleElement().asString()
+                .contains("The student Test " + STUDENT_HANDING_IN + " added a new submission in the assignment Report");
+    }
+
+    @Test
+    void gradingASubmissionNotifiesTheStudent() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_TO_GRADE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long submissionId = data.submission(data.assignment(courseId, "Quiz"), studentId);
+        jdbcTemplate.update("DELETE FROM grades WHERE submission_id = ?", submissionId);
+        jdbcTemplate.update("DELETE FROM notifications WHERE user_id IN (?, ?)", studentId, teacherId);
+
+        mockMvc.perform(post("/utemp/submissions/{id}/grades", submissionId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TEACHER)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"submission": {"id": %d}, "grade": 9.5, "comments": "Well done", "state": "FINALIZED"}
+                                """.formatted(submissionId)))
+                .andExpect(status().isCreated());
+
+        assertThat(jdbcTemplate.queryForList("SELECT message FROM notifications WHERE user_id = ?", String.class, studentId))
+                .singleElement().asString().contains("Quiz", "9.5");
+        // The teacher is the one who graded; they used to get the notification instead of the student
+        assertThat(data.count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", teacherId)).isZero();
+    }
+
+    @Test
+    void manualReviewStoresTheCommentAsWritten() throws Exception {
+        Long studentId = data.user(STUDENT_TO_REVIEW, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long submissionId = data.submission(data.assignment(courseId, "Lab"), studentId);
+        jdbcTemplate.update("DELETE FROM grades WHERE submission_id = ?", submissionId);
+        jdbcTemplate.update("""
+                INSERT INTO grades (submission_id, grade, comments, reviewed_by_ai, state, created_at, last_update)
+                VALUES (?, 6, 'Preliminary', TRUE, 'PENDING_REVIEW', NOW(), NOW())
+                """, submissionId);
+
+        mockMvc.perform(put("/utemp/submissions/{id}/{grade}", submissionId, 8.5)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TEACHER)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"comments": "Nice work"}
+                                """))
+                .andExpect(status().isOk());
+
+        assertThat(jdbcTemplate.queryForMap("SELECT grade, comments, state FROM grades WHERE submission_id = ?", submissionId))
+                .containsEntry("grade", 8.5)
+                .containsEntry("comments", "Nice work")
+                .containsEntry("state", "FINALIZED");
+    }
+
+    @Test
     void enrollingAStudentReportsTheRealOutcome() throws Exception {
         Long studentId = data.user(STUDENT_TO_ENROLL, "STUDENT", TestData.STUDENT_PERMISSIONS);
         String admin = data.login(TestData.ADMIN);
@@ -95,6 +167,29 @@ class CourseworkIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
                 .andExpect(status().isNotFound());
         assertThat(data.count("SELECT COUNT(*) FROM enrollments WHERE student_id = ?", studentId)).isOne();
+    }
+
+    @Test
+    void updatingAnEnrollmentSucceedsEveryTime() throws Exception {
+        Long studentId = data.user(STUDENT_TO_UPDATE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, courseId);
+        Long enrollmentId = jdbcTemplate.queryForObject("SELECT id FROM enrollments WHERE course_id = ? AND student_id = ?",
+                Long.class, courseId, studentId);
+        String admin = data.login(TestData.ADMIN);
+
+        // The update used to hand its entities to an @Async method, which read them from another thread while the
+        // request was still using the same Hibernate session; repeating it makes that race show up
+        for (int attempt = 1; attempt <= 20; attempt++) {
+            String state = attempt % 2 == 0 ? "ENROLLED" : "COMPLETED";
+            mockMvc.perform(put("/utemp/enrollments/{id}", enrollmentId)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"course": {"id": %d}, "student": {"id": %d}, "state": "%s"}
+                                    """.formatted(courseId, studentId, state)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.state").value(state));
+        }
     }
 
     @Test
@@ -120,6 +215,37 @@ class CourseworkIntegrationTest {
 
         assertThat(jdbcTemplate.queryForObject("SELECT teacher_id FROM courses WHERE id = ?", Long.class, courseToHandOver))
                 .isEqualTo(newTeacherId);
+    }
+
+    @Test
+    void onlyATeacherCanTeachACourse() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_WITHOUT_FILE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long departmentId = jdbcTemplate.queryForObject("SELECT MIN(id) FROM departments", Long.class);
+        String admin = data.login(TestData.ADMIN);
+        String newCourse = """
+                {"name": "Test Taught By", "description": "Test course", "state": "ACTIVE",
+                 "teacher": {"id": %d}, "department": {"id": %d}}
+                """;
+
+        mockMvc.perform(post("/utemp/courses").header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(newCourse.formatted(studentId, departmentId)))
+                .andExpect(status().isBadRequest());
+        assertThat(data.count("SELECT COUNT(*) FROM courses WHERE name = 'Test Taught By'")).isZero();
+
+        mockMvc.perform(put("/utemp/courses/{id}", courseId).header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Test Coursework", "description": "Test course", "state": "ACTIVE",
+                                 "teacher": {"id": %d}}
+                                """.formatted(studentId)))
+                .andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("SELECT teacher_id FROM courses WHERE id = ?", Long.class, courseId))
+                .isEqualTo(teacherId);
+
+        mockMvc.perform(post("/utemp/courses").header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(newCourse.formatted(teacherId, departmentId)))
+                .andExpect(status().isCreated());
     }
 
     @Test

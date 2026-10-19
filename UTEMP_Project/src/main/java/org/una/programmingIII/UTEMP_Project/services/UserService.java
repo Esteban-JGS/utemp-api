@@ -7,8 +7,6 @@ import org.una.programmingIII.UTEMP_Project.dtos.CourseDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.EnrollmentDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.NotificationDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
-import org.una.programmingIII.UTEMP_Project.models.Course;
-import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.models.UserRole;
 
 import java.util.Optional;
@@ -39,5 +37,5 @@ public interface UserService {
 
     void unrollUserFromCourse(Long userId, Long courseId);
 
-    CompletableFuture<Void> notifyUserAndProfessor(User user, Course course);
+    CompletableFuture<Void> notifyUserAndProfessor(String studentName, String studentEmail, String courseName, String teacherEmail);
 }

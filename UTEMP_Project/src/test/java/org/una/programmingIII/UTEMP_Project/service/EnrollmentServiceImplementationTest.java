@@ -19,7 +19,6 @@ import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.EnrollmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
-import org.una.programmingIII.UTEMP_Project.services.UserService;
 import org.una.programmingIII.UTEMP_Project.services.enrollment.EnrollmentServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 
@@ -37,8 +36,6 @@ class EnrollmentServiceImplementationTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private UserService userService;
 
     @Mock
     private GenericMapper<Enrollment, EnrollmentDTO> enrollmentMapper;
@@ -145,7 +142,6 @@ class EnrollmentServiceImplementationTest {
         assertTrue(result.isPresent());
         verify(enrollmentRepository, times(1)).findById(enrollmentId);
         verify(enrollmentRepository, times(1)).save(any(Enrollment.class));
-        verify(userService, times(1)).notifyUserAndProfessor(enrollment.getStudent(), enrollment.getCourse());
     }
 
     @Test

@@ -9,10 +9,14 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.slf4j.Logger;
 
@@ -21,6 +25,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(OutputCaptureExtension.class)
 class EmailNotificationObserverTest {
 
     @InjectMocks
@@ -72,6 +77,19 @@ class EmailNotificationObserverTest {
 
         // Assert
         verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    void testSendEmail_WhenMailServerFails_ShouldOnlyLogAWarning(CapturedOutput output) {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doThrow(new MailSendException("Mail server connection failed")).when(mailSender).send(mimeMessage);
+
+        // Runs on the async executor: an exception here would only end up as a stack trace in the logs
+        assertDoesNotThrow(() -> emailNotificationObserver.sendEmail("student@utemp.example", "Subject", "Body"));
+
+        assertTrue(output.getOut().contains("WARN"));
+        assertTrue(output.getOut().contains("Failed to send email to student@utemp.example: Mail server connection failed"));
+        assertFalse(output.getOut().contains("	at "), "no stack trace");
     }
 
     @Test

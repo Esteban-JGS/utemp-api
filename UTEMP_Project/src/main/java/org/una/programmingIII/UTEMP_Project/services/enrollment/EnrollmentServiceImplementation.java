@@ -20,7 +20,6 @@ import org.una.programmingIII.UTEMP_Project.models.Enrollment;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.EnrollmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
-import org.una.programmingIII.UTEMP_Project.services.UserService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFactory;
 
@@ -37,7 +36,6 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
 
     private final GenericMapper<Enrollment, EnrollmentDTO> enrollmentMapper;
 
@@ -46,14 +44,12 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             EnrollmentRepository enrollmentRepository,
             CourseRepository courseRepository,
             UserRepository userRepository,
-            GenericMapperFactory mapperFactory,
-            UserService userService) {
+            GenericMapperFactory mapperFactory) {
 
         this.enrollmentRepository = enrollmentRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.enrollmentMapper = mapperFactory.createMapper(Enrollment.class, EnrollmentDTO.class);
-        this.userService = userService;
     }
 
     @Override
@@ -146,8 +142,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             logger.warn("Failed to create enrollment: {}", e.getMessage());
             throw e;
         } catch (DataIntegrityViolationException e) {
-            logger.error("Data integrity violation while creating enrollment: {}", e.getMessage());
-            throw new ServiceException("Enrollment data is invalid or already exists", e);
+            logger.warn("Enrollment rejected by the database: {}", e.getMostSpecificCause().getMessage());
+            throw e;
         } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
@@ -163,8 +159,8 @@ public class EnrollmentServiceImplementation implements EnrollmentService {
             Optional<Enrollment> optionalEnrollment = enrollmentRepository.findById(id);
             Enrollment existingEnrollment = optionalEnrollment.orElseThrow(() -> new ResourceNotFoundException("Enrollment", id));
 
+            // The enrollment email is only sent when the student is enrolled, not on every update
             updateEnrollmentFields(existingEnrollment, enrollmentDTO);
-            userService.notifyUserAndProfessor(existingEnrollment.getStudent(), existingEnrollment.getCourse());
             return Optional.of(enrollmentMapper.convertToDTO(enrollmentRepository.save(existingEnrollment)));
         } catch (ResourceNotFoundException e) {
             logger.warn("Failed to update enrollment: {}", e.getMessage());

@@ -18,6 +18,7 @@ import org.una.programmingIII.UTEMP_Project.models.User;
 import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
+import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 import org.una.programmingIII.UTEMP_Project.services.assignment.AssignmentServiceImplementation;
 import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
@@ -45,6 +46,9 @@ class AssignmentServiceImplementationTest {
 
     @Mock
     private SubmissionRepository submissionRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private NotificationService notificationService;
@@ -157,13 +161,18 @@ class AssignmentServiceImplementationTest {
 
         User student = new User();
         student.setName("Student");
+        // Like the mapped request body, the submission only knows the student's id
+        User studentReference = new User();
+        studentReference.setId(7L);
         Submission submission = new Submission();
         submission.setId(1L);
-        submission.setStudent(student);
+        submission.setStudent(studentReference);
         SubmissionDTO submissionDTO = new SubmissionDTO();
         submissionDTO.setId(1L);
+        submissionDTO.getStudent().setId(7L);
 
         when(assignmentRepository.findById(1L)).thenReturn(Optional.of(assignment));
+        when(userRepository.findById(7L)).thenReturn(Optional.of(student));
         when(submissionMapper.convertToEntity(submissionDTO)).thenReturn(submission);
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
         when(submissionMapper.convertToDTO(any(Submission.class))).thenReturn(submissionDTO);
@@ -176,6 +185,6 @@ class AssignmentServiceImplementationTest {
         // The automatic review is triggered by the file upload, not by creating the submission
         assertSame(assignment, submission.getAssignment());
         assertTrue(assignment.getSubmissions().contains(submission));
-        verify(notificationService, times(1)).sendNotificationToUser(eq(5L), anyString());
+        verify(notificationService, times(1)).sendNotificationToUser(eq(5L), startsWith("The student Student added"));
     }
 }

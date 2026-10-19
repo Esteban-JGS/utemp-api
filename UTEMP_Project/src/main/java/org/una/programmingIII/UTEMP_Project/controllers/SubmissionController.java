@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.una.programmingIII.UTEMP_Project.controllers.request.ManualReviewRequest;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
@@ -364,8 +365,9 @@ public class SubmissionController {
 
     @PutMapping("/{submissionId}/{gradeValue}")
     @PreAuthorize("hasAuthority('EVALUATE_SUBMISSIONS') and @access.canManageSubmission(#submissionId, principal)")
-    public ResponseEntity<Void> manualReviewSubmission(@PathVariable Long submissionId, @PathVariable Double gradeValue, @RequestBody String comments) {
-        Optional<Grade> grade = submissionService.manualReviewSubmission(submissionId, gradeValue, comments);
+    public ResponseEntity<Void> manualReviewSubmission(@PathVariable Long submissionId, @PathVariable Double gradeValue,
+                                                       @Valid @RequestBody ManualReviewRequest request) {
+        Optional<Grade> grade = submissionService.manualReviewSubmission(submissionId, gradeValue, request.getComments());
         if (grade.isPresent()) {
             return ResponseEntity.ok().build();
         } else {

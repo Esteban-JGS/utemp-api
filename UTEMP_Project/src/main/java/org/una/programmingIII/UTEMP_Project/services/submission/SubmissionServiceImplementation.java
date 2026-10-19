@@ -231,7 +231,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         return executeWithLogging(() -> {
             Grade savedGrade = gradeRepository.save(grade);
             submission.getGrades().add(savedGrade);
-            notifyAboutGrade(savedGrade, submission);
+            sendNotificationForGrade(savedGrade, submission);
             logger.info("Grade added successfully to submission ID: {}", submissionId);
             return gradeMapper.convertToDTO(savedGrade);
         }, "Error adding grade to submission ID: " + submissionId);
@@ -295,7 +295,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
     @Async("taskExecutor")
     protected void sendNotificationForGrade(Grade grade, Submission submission) {
-        String message = "The grade of the assigment '" +
+        String message = "The grade of the assignment '" +
                 submission.getAssignment().getTitle() + "' was " + grade.getGrade();
         try {
             notifyObservers("SUBMISSION_GRADED", message, submission.getStudent().getEmail());
@@ -341,22 +341,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
     private void validateComments(String comments) {
         if (comments == null || comments.trim().isEmpty()) {
             throw new InvalidDataException("Comments cannot be null or empty.");
-        }
-    }
-
-    @Async("taskExecutor")
-    protected void notifyAboutGrade(Grade savedGrade, Submission submission) {
-        String message = "A new grade has been added for the submission by " +
-                submission.getStudent().getName() +
-                " in the assignment " + submission.getAssignment().getTitle();
-        try {
-            notifyObservers("GRADE_NOTIFICATION", message, submission.getAssignment().getCourse().getTeacher().getEmail());
-            notificationService.sendNotificationToUser(submission.getAssignment().getCourse().getTeacher().getId(), message);
-            logger.info("Notification sent for grade to teacher ID: {}", submission.getAssignment().getCourse().getTeacher().getId());
-        } catch (DomainException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error notifying teacher {}: {}", submission.getAssignment().getCourse().getTeacher().getEmail(), e.getMessage());
         }
     }
 }

@@ -1,6 +1,7 @@
 package org.una.programmingIII.UTEMP_Project.exceptions;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,11 @@ class GlobalExceptionHandlerTest {
         assertStatus(handler.handleResourceAlreadyExistsException(new ResourceAlreadyExistsException("User", "dup")), HttpStatus.CONFLICT);
         assertStatus(handler.handleInvalidTokenException(new InvalidTokenException("bad")), HttpStatus.UNAUTHORIZED);
         assertStatus(handler.handleTokenExpiredException(new TokenExpiredException("old")), HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void constraintViolationsBecomeConflicts() {
+        assertStatus(handler.handleDataIntegrityViolation(new DataIntegrityViolationException("duplicate key")), HttpStatus.CONFLICT);
     }
 
     @Test

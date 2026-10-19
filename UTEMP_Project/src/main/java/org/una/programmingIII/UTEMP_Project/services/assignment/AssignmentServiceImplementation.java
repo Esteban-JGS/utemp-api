@@ -24,6 +24,7 @@ import org.una.programmingIII.UTEMP_Project.observers.Subject;
 import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.SubmissionRepository;
+import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
 import org.una.programmingIII.UTEMP_Project.services.EmailNotificationObserver;
 import org.una.programmingIII.UTEMP_Project.services.notification.NotificationService;
 import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapper;
@@ -42,6 +43,7 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
     private final AssignmentRepository assignmentRepository;
     private final CourseRepository courseRepository;
     private final SubmissionRepository submissionRepository;
+    private final UserRepository userRepository;
     private final NotificationService notificationService;
 
     private final GenericMapper<Assignment, AssignmentDTO> assignmentMapper;
@@ -52,12 +54,14 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
             AssignmentRepository assignmentRepository,
             CourseRepository courseRepository,
             SubmissionRepository submissionRepository,
+            UserRepository userRepository,
             NotificationService notificationService,
             GenericMapperFactory mapperFactory) {
 
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.submissionRepository = submissionRepository;
+        this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.assignmentMapper = mapperFactory.createMapper(Assignment.class, AssignmentDTO.class);
         this.submissionMapper = mapperFactory.createMapper(Submission.class, SubmissionDTO.class);
@@ -205,6 +209,8 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         Assignment assignment = getEntityById(assignmentId, assignmentRepository, "Assignment");
         Submission submission = submissionMapper.convertToEntity(submissionDTO);
         submission.setAssignment(assignment);
+        // The body only carries the student's id; load the student so the rest of their data is available
+        submission.setStudent(getEntityById(submissionDTO.getStudent().getId(), userRepository, "User"));
 
         return executeWithLogging(() -> {
             try {

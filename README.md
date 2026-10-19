@@ -7,15 +7,15 @@
 
 REST API for managing university coursework: universities, faculties, departments, courses, enrollments,
 assignments, submissions and grades. Students upload their work in chunks, a simulated AI
-reviewer stores a preliminary grade in the background, teachers confirm or change it, and notifications are sent
-asynchronously on key events.
+reviewer stores a preliminary grade in the background, teachers confirm or change it, and students and teachers
+get in-app notifications on key events.
 
 Built with Java 21 and Spring Boot 3.3: JWT authentication with refresh tokens, permission-based access control,
 PostgreSQL with Flyway migrations, Docker Compose, and tests with JUnit 5, Mockito and Testcontainers.
 
 ## Run it in 5 minutes
 
-Requirements: Docker.
+Requirements: Docker. The login example below also uses `curl` and [`jq`](https://jqlang.github.io/jq/).
 
 ```bash
 git clone https://github.com/Esteban-JGS/utemp-api.git
@@ -48,8 +48,9 @@ curl -H "Authorization: Bearer $TOKEN" localhost:8080/utemp/users/me
 
 ### Run locally without Docker for the API
 
+Requires JDK 21+ and Maven. From the `UTEMP_Project` folder:
+
 ```bash
-cd UTEMP_Project
 docker compose up -d postgres          # only the database
 export $(grep -v '^#' .env | xargs)    # load the variables from .env
 mvn spring-boot:run
@@ -57,8 +58,9 @@ mvn spring-boot:run
 
 ### Tests
 
+Requires JDK 21+ and Maven. From the `UTEMP_Project` folder:
+
 ```bash
-cd UTEMP_Project
 mvn test
 ```
 
@@ -108,7 +110,8 @@ The full, interactive list is in Swagger UI.
 | Files         | `POST /files`, `POST /files/receive-chunk`, `GET /files/download/{id}`, `DELETE /files/{id}` |
 | Notifications | `/notifications`, `/notifications/user/{userId}`                                           |
 
-Errors always have the same shape, produced by a single `@RestControllerAdvice`:
+Errors always have the same shape, whether they come from the `@RestControllerAdvice` or from the security
+filters (`401` and `403`):
 
 ```json
 { "data": null, "statusCode": 403, "message": "Access denied" }
@@ -117,17 +120,25 @@ Errors always have the same shape, produced by a single `@RestControllerAdvice`:
 ## Security decisions
 
 - **Stateless JWT authentication.** Short-lived access tokens (15 min) and refresh tokens (7 days), signed with
-  HMAC-SHA256 using jjwt 0.12. Each token carries a `type` claim, so a refresh token cannot be used to call the API
-  and an access token cannot be used to refresh. The session policy is `STATELESS`.
+  HMAC using jjwt 0.12, which picks HS256, HS384 or HS512 from the key length (a key generated with
+  `openssl rand -base64 48` gives HS512). Each token carries a `type` claim, so a refresh token cannot be used to
+  call the API and an access token cannot be used to refresh. The session policy is `STATELESS`.
 - **No secrets in the repository.** Database, mail and JWT settings come from environment variables
   (`.env.example` documents them). The JWT key must be at least 256 bits; the application refuses to start with a
   weaker key.
 - **Passwords hashed with BCrypt** and never returned by the API (the password field is write-only).
-- **Authorization at two levels.** `@PreAuthorize` rules check permissions per endpoint, and services check
-  ownership: a file can only be read by its owner, the teacher of the course or an admin, and only modified by its
-  owner or an admin. Another user gets `403`; this is covered by an integration test.
+- **Authorization at two levels.** `@PreAuthorize` rules check permissions per endpoint, and record-level rules
+  (`AccessRules`) check who the record belongs to:
+  - only the teacher of a course, or an admin, manages its assignments and reviews and grades its submissions;
+  - students see the assignments of the courses they are enrolled in, and only their own grades and notifications;
+  - a file can only be read by its owner, the teacher of the course or an admin, and only modified by its owner or
+    an admin.
+
+  Anyone else gets `403`, and integration tests cover each rule. A suspended account loses access at once, even
+  with a token issued before the suspension.
 - **Safe file storage.** Uploaded files are stored under a server-generated UUID; the original name is kept only as
-  metadata and never used to build a path, which prevents path traversal. Downloads use a properly encoded
+  metadata and never used to build a path, which prevents path traversal. Uploads are limited in size
+  (`FILE_MAX_SIZE`, 20 MB by default) and their chunks must arrive in order. Downloads use a properly encoded
   `Content-Disposition` header.
 - **Schema under version control.** Flyway owns the schema and Hibernate only validates it (`ddl-auto=validate`).
   Demo data lives in a separate migration location that is only enabled by Docker Compose.
@@ -139,6 +150,18 @@ When the last chunk of a submission file arrives, `FileService` publishes a `Sub
 response is not delayed and the review always sees the stored file. It saves a preliminary grade and comment
 (`PENDING_REVIEW`, `reviewedByAi = true`) and notifies the student; the teacher confirms or changes it through the
 manual review. The grade is random but stable per file, which is enough to demo the asynchronous flow.
+
+## Notifications
+
+Notifications are stored in the database and read through `/notifications/user/{userId}`:
+
+- a student is notified when an assignment is added to one of their courses (`POST /courses/{id}/assignments`) and
+  when their submission is graded, by the teacher or by the simulated review;
+- the teacher is notified when a student hands in work.
+
+Email is only sent when a student is enrolled (`POST /users/{userId}/enrollments/{courseId}`), to the student and
+the teacher, using the Observer pattern on the async executor. It needs the SMTP settings in
+`.env`; without them each failed email is logged as a single warning.
 
 ## Tech stack
 
