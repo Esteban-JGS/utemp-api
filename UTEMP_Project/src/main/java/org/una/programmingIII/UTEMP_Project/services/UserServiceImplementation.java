@@ -145,25 +145,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UserDTO> getUserByRole(UserRole role) {
-        try {
-            return executeWithLogging(() -> {
-                User user = userRepository.findByRole(role.toString());
-                return Optional.ofNullable(user).map(userMapper::convertToDTO);
-            }, "Error fetching user by role");
-        } catch (ResourceNotFoundException e) {
-            logger.error("User not found with role {}: {}", role, e.getMessage());
-            throw e;
-        } catch (DomainException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Unexpected error occurred while fetching user by role {}: {}", role, e.getMessage());
-            throw new InvalidDataException("Error fetching user by role");
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         try {
             return executeWithLogging(() -> {

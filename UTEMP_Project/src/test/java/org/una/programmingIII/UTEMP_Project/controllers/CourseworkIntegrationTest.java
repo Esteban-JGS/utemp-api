@@ -14,6 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.una.programmingIII.UTEMP_Project.TestcontainersConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -118,6 +120,18 @@ class CourseworkIntegrationTest {
 
         assertThat(jdbcTemplate.queryForObject("SELECT teacher_id FROM courses WHERE id = ?", Long.class, courseToHandOver))
                 .isEqualTo(newTeacherId);
+    }
+
+    @Test
+    void usersAreListedByRoleOnlyThroughThePaginatedEndpoint() throws Exception {
+        String admin = data.login(TestData.ADMIN);
+
+        mockMvc.perform(get("/utemp/users/usersByRole/{role}", "TEACHER").header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].role", everyItem(is("TEACHER"))));
+        // The single-result variant failed for every role and was removed
+        mockMvc.perform(get("/utemp/users/role/{role}", "TEACHER").header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isNotFound());
     }
 
     private Long insertFile(Long submissionId, Long studentId) {

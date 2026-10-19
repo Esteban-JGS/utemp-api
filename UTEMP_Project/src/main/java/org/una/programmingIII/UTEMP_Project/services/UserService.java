@@ -25,8 +25,6 @@ public interface UserService {
 
     Optional<UserDTO> getUserByIdentificationNumber(String identificationNumber);
 
-    Optional<UserDTO> getUserByRole(UserRole role);
-
     Optional<UserDTO> updateUser(Long id, @Valid UserDTO userDTO);
 
     boolean deleteUser(Long id);

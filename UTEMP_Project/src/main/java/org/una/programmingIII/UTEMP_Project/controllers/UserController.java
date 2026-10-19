@@ -245,48 +245,6 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Get User by role",
-            description = "Retrieves a specific user using their role."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "User found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = UserDTO.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "User not found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"User not found.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Error retrieving the user.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Error retrieving user.\"}")
-                    )
-            )
-    })
-    @GetMapping("/role/{role}")
-    @PreAuthorize("hasAuthority('MANAGE_USERS')")
-    public ResponseEntity<UserDTO> getUserByRole(
-            @Parameter(description = "Identification number of the user") @PathVariable UserRole role) {
-        Optional<UserDTO> userDTO = userService.getUserByRole(role);
-        return userDTO.map(ResponseEntity::ok)
-                .orElseGet(() -> {
-                    logger.warn("User with role {} not found", role);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                });
-    }
-
-    @Operation(
             summary = "Create User",
             description = "Creates a new user in the system."
     )
