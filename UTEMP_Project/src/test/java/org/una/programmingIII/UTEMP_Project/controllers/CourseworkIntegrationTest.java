@@ -42,6 +42,7 @@ class CourseworkIntegrationTest {
     private static final String STUDENT_TO_GRADE = "300000084";
     private static final String STUDENT_TO_REVIEW = "300000085";
     private static final String STUDENT_TO_UPDATE = "300000086";
+    private static final String STUDENT_HANDING_IN = "300000087";
 
     @Autowired
     private MockMvc mockMvc;
@@ -78,6 +79,28 @@ class CourseworkIntegrationTest {
                 .andExpect(jsonPath("$.content[1].id").value(withFiles))
                 // Like the automatic review, the listing points to the latest upload
                 .andExpect(jsonPath("$.content[1].metadataID").value(latestFile));
+    }
+
+    @Test
+    void handingInWorkNotifiesTheTeacherWithTheStudentsName() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_HANDING_IN, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, courseId);
+        Long reportId = data.assignment(courseId, "Report");
+        jdbcTemplate.update("DELETE FROM notifications WHERE user_id = ?", teacherId);
+
+        // The body only carries the student's id; the name has to come from the database
+        mockMvc.perform(post("/utemp/assignments/{id}/submissions", reportId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(STUDENT_HANDING_IN)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"student": {"id": %d}, "assignment": {"id": %d}, "fileName": "report.txt", "state": "SUBMITTED"}
+                                """.formatted(studentId, reportId)))
+                .andExpect(status().isCreated());
+
+        assertThat(jdbcTemplate.queryForList("SELECT message FROM notifications WHERE user_id = ?", String.class, teacherId))
+                .singleElement().asString()
+                .contains("The student Test " + STUDENT_HANDING_IN + " added a new submission in the assignment Report");
     }
 
     @Test
