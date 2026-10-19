@@ -142,7 +142,6 @@ public class SubmissionController {
     @PreAuthorize("hasAuthority('MANAGE_SUBMISSIONS')")
     public ResponseEntity<SubmissionDTO> createSubmission(
             @Valid @RequestBody SubmissionDTO submissionDTO) {
-        // Llamada al servicio para crear la submission
         SubmissionDTO createdSubmission = submissionService.createSubmission(submissionDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSubmission);
     }

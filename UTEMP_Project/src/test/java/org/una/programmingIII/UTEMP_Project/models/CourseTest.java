@@ -26,10 +26,10 @@ public class CourseTest {
     private Validator validator;
 
     @Mock
-    private User teacher; // Mock de User, ya que Course tiene una relación con User
+    private User teacher;
 
     @Mock
-    private Department department; // Mock de Department, ya que Course tiene una relación con Department
+    private Department department;
 
     @BeforeEach
     public void setUp() {
@@ -44,7 +44,7 @@ public class CourseTest {
                 .createdAt(LocalDateTime.now())
                 .lastUpdate(LocalDateTime.now())
                 .build();
-        course.onCreate(); // Simula la creación al iniciar
+        course.onCreate(); // What @PrePersist does when the course is saved
     }
 
     @Test
@@ -55,8 +55,8 @@ public class CourseTest {
         assertNotNull(course.getCreatedAt());
         assertNotNull(course.getLastUpdate());
         assertEquals(CourseState.ACTIVE, course.getState());
-        assertTrue(course.getAssignments().isEmpty()); // Verifica que la lista de asignaciones esté vacía al inicio
-        assertTrue(course.getEnrollments().isEmpty()); // Verifica que la lista de inscripciones esté vacía al inicio
+        assertTrue(course.getAssignments().isEmpty());
+        assertTrue(course.getEnrollments().isEmpty());
     }
 
     @Test
@@ -111,7 +111,7 @@ public class CourseTest {
     @Test
     void testAddAssignment() {
         Assignment assignment = new Assignment();
-        assignment.setCourse(course); // Relacionar el Assignment con el Course
+        assignment.setCourse(course);
         course.getAssignments().add(assignment);
         assertEquals(1, course.getAssignments().size());
         assertTrue(course.getAssignments().contains(assignment));
@@ -120,7 +120,7 @@ public class CourseTest {
     @Test
     void testAddEnrollment() {
         Enrollment enrollment = new Enrollment();
-        enrollment.setCourse(course); // Relacionar la Enrollment con el Course
+        enrollment.setCourse(course);
         course.getEnrollments().add(enrollment);
         assertEquals(1, course.getEnrollments().size());
         assertTrue(course.getEnrollments().contains(enrollment));
@@ -138,7 +138,7 @@ public class CourseTest {
         String newDescription = "Updated Course Description";
         course.setName(newName);
         course.setDescription(newDescription);
-        course.onUpdate(); // Simula la actualización
+        course.onUpdate(); // What @PreUpdate does
         assertEquals(newName, course.getName());
         assertEquals(newDescription, course.getDescription());
         assertNotNull(course.getLastUpdate());
@@ -172,7 +172,7 @@ public class CourseTest {
 
     @Test
     void testExtremeDescription() {
-        String extremeDescription = "D".repeat(500); // Probar con la longitud máxima permitida
+        String extremeDescription = "D".repeat(500); // The longest description allowed
         course.setDescription(extremeDescription);
         Set<ConstraintViolation<Course>> violations = validator.validate(course);
         assertTrue(violations.isEmpty(), "The description should have no violations");

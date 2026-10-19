@@ -9,7 +9,7 @@ import org.una.programmingIII.UTEMP_Project.models.FileMetadatum;
 public interface FileMetadatumRepository extends JpaRepository<FileMetadatum, Long> {
 
     /**
-     * Indica si el usuario subió el archivo o es el profesor del curso al que pertenece la entrega.
+     * Whether the user uploaded the file or teaches the course its submission belongs to.
      */
     @Query("""
             select count(f) > 0 from FileMetadatum f

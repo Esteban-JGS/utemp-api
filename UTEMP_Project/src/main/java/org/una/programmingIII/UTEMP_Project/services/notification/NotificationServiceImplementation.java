@@ -95,7 +95,7 @@ public class NotificationServiceImplementation implements NotificationService {
         try {
             Notification notification = notificationMapper.convertToEntity(notificationDTO);
             notification.setUser(getEntityById(notificationDTO.getUser().getId(), userRepository, "User"));
-            notification.setStatus(NotificationStatus.UNREAD); // Estado por defecto
+            notification.setStatus(NotificationStatus.UNREAD);
 
             return executeWithLogging(() -> notificationMapper.convertToDTO(notificationRepository.save(notification)),
                     "Error creating notification");
@@ -196,7 +196,7 @@ public class NotificationServiceImplementation implements NotificationService {
         try {
             User user = getEntityById(userId, userRepository, "User");
             Notification notification = getEntityById(notificationId, notificationRepository, "Notification");
-            if (user.getNotifications().remove(notification)) { // Utiliza el retorno de remove
+            if (user.getNotifications().remove(notification)) {
                 executeWithLogging(() -> {
                     notificationRepository.delete(notification);
                     return null;
@@ -237,11 +237,9 @@ public class NotificationServiceImplementation implements NotificationService {
     @Override
     public void sendNotificationToUser(Long userId, String message) {
         try {
-            // Busca el usuario por ID y lanza excepción si no lo encuentra
             User userEntity = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-            // Convierte la entidad a DTO
             UserDTO userDTO;
             try {
                 userDTO = userMapper.convertToDTO(userEntity);
@@ -252,16 +250,14 @@ public class NotificationServiceImplementation implements NotificationService {
                 throw new ServiceException("Error converting User entity to DTO", e);
             }
 
-            // Crea y configura la notificación
             NotificationDTO notification = new NotificationDTO();
-            notification.setUser(userDTO); // Aquí se asigna el DTO convertido
+            notification.setUser(userDTO);
             notification.setMessage(message);
             notification.setStatus(NotificationStatus.UNREAD);
 
-            // Agrega la notificación al usuario
             addNotificationToUser(userId, notification);
         } catch (ResourceNotFoundException e) {
-            throw e; // Lanza excepción si el usuario no se encuentra
+            throw e;
         } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
@@ -271,7 +267,7 @@ public class NotificationServiceImplementation implements NotificationService {
     }
 
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

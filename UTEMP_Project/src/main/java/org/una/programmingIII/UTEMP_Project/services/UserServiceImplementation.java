@@ -322,7 +322,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error unrolling user from course");
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private void validateUser(UserDTO userDTO) {
         userValidator.validate(userDTO);

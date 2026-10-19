@@ -115,13 +115,11 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         } catch (ResourceNotFoundException e) {
             throw e;
         } catch (ValidationException e) {
-            // Manejo de excepciones de validación
             logger.warn("Validation error while creating submission: {}", e.getMessage());
             throw e;
         } catch (DomainException e) {
             throw e;
         } catch (Exception e) {
-            // Manejo de excepciones generales
             logger.error("Error creating submission: {}", e.getMessage());
             throw new ServiceException("Error creating submission", e);
         }
@@ -236,7 +234,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)

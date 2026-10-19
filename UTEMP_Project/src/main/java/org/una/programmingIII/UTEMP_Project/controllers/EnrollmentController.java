@@ -93,7 +93,7 @@ public class EnrollmentController {
                     description = "Enrollments for course fetched successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class) // Ajusta el esquema para que sea una lista paginada de EnrollmentDTO
+                            schema = @Schema(implementation = Page.class)
                     )
             ),
             @ApiResponse(
@@ -151,7 +151,7 @@ public class EnrollmentController {
                     description = "Enrollments for student fetched successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = Page.class) // Define que se devuelve una página de EnrollmentDTO
+                            schema = @Schema(implementation = Page.class)
                     )
             ),
             @ApiResponse(
@@ -209,7 +209,7 @@ public class EnrollmentController {
                     description = "Enrollment found",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = EnrollmentDTO.class) // Define que el objeto de retorno es un EnrollmentDTO
+                            schema = @Schema(implementation = EnrollmentDTO.class)
                     )
             ),
             @ApiResponse(
@@ -269,7 +269,7 @@ public class EnrollmentController {
                     description = "Enrollment created successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = EnrollmentDTO.class) // Retorna el EnrollmentDTO recién creado
+                            schema = @Schema(implementation = EnrollmentDTO.class)
                     )
             ),
             @ApiResponse(
@@ -325,7 +325,7 @@ public class EnrollmentController {
                     description = "Enrollment updated successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = EnrollmentDTO.class) // Retorna el objeto actualizado
+                            schema = @Schema(implementation = EnrollmentDTO.class)
                     )
             ),
             @ApiResponse(

@@ -163,7 +163,7 @@ public class GradeServiceImplementation implements GradeService {
         }
     }
 
-    // --------------- MÉTODOS AUXILIARES -----------------
+    // --------------- Helpers -----------------
 
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return getEntityById(id, repository)

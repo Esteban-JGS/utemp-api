@@ -67,10 +67,8 @@ public class UniversityController {
         logger.info("Fetching all universities with pagination");
         Page<UniversityDTO> universitiesPage = universityService.getAllUniversities(pageable);
 
-        // Convertir la página a PageDTO usando PageConverter
         PageDTO<UniversityDTO> universityDTOPage = PageConverter.convertPageToDTO(universitiesPage, universityDTO -> universityDTO);
 
-        // Retornar la respuesta con el PageDTO
         return ResponseEntity.ok(universityDTOPage);
     }
 

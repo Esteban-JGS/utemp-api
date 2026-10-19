@@ -113,7 +113,7 @@ public class UserController {
     public ResponseEntity<PageDTO<UserDTO>> getAllUsers(@PageableDefault Pageable pageable) {
         logger.info("Fetching all users with pagination");
 
-        Page<UserDTO> usersDTO = userService.getAllUsers(pageable); // Cambiar a Page<User>
+        Page<UserDTO> usersDTO = userService.getAllUsers(pageable);
         PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
 
         return ResponseEntity.ok(userDTOPage);
@@ -146,7 +146,7 @@ public class UserController {
     public ResponseEntity<PageDTO<UserDTO>> getAllUsersByRole(@PathVariable UserRole role, @PageableDefault Pageable pageable) {
         logger.info("Fetching all users by role with pagination");
 
-        Page<UserDTO> usersDTO = userService.getAllUsersByRole(role, pageable); // Cambiar a Page<User>
+        Page<UserDTO> usersDTO = userService.getAllUsersByRole(role, pageable);
         PageDTO<UserDTO> userDTOPage = PageConverter.convertPageToDTO(usersDTO, userDTO -> userDTO);
 
         return ResponseEntity.ok(userDTOPage);
@@ -397,10 +397,8 @@ public class UserController {
                                                                          Pageable pageable) {
         Page<CourseDTO> coursesPage = userService.getCoursesTeachingByUserId(id, pageable);
 
-        // Convertir la página a PageDTO
         PageDTO<CourseDTO> coursesDTOPage = PageConverter.convertPageToDTO(coursesPage, courseDTO -> courseDTO);
 
-        // Retornar la respuesta con el PageDTO
         return ResponseEntity.ok(coursesDTOPage);
     }
 

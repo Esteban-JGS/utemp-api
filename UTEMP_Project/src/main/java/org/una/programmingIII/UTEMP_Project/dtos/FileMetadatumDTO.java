@@ -49,10 +49,10 @@ public class FileMetadatumDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
     private LocalDateTime lastUpdate;
 
-    // Nuevos campos para manejo de fragmentos
-    private byte[] fileChunk; // Fragmento del archivo
-    private int chunkIndex; // Índice del fragmento
-    private int totalChunks; // Número total de fragmentos
+    // Used by POST /files/receive-chunk
+    private byte[] fileChunk;
+    private int chunkIndex;
+    private int totalChunks;
 
     @Override
     public String toString() {
