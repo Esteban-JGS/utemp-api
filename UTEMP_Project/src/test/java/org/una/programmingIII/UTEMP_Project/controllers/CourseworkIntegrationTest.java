@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
 
 /**
- * Everyday flows of a course: listing submissions, enrolling students and changing the teacher.
+ * Everyday flows of a course: listing and grading submissions, enrolling students and changing the teacher.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,6 +39,7 @@ class CourseworkIntegrationTest {
     private static final String STUDENT_WITHOUT_FILE = "300000081";
     private static final String STUDENT_WITH_FILES = "300000082";
     private static final String STUDENT_TO_ENROLL = "300000083";
+    private static final String STUDENT_TO_GRADE = "300000084";
 
     @Autowired
     private MockMvc mockMvc;
@@ -75,6 +76,28 @@ class CourseworkIntegrationTest {
                 .andExpect(jsonPath("$.content[1].id").value(withFiles))
                 // Like the automatic review, the listing points to the latest upload
                 .andExpect(jsonPath("$.content[1].metadataID").value(latestFile));
+    }
+
+    @Test
+    void gradingASubmissionNotifiesTheStudent() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_TO_GRADE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long submissionId = data.submission(data.assignment(courseId, "Quiz"), studentId);
+        jdbcTemplate.update("DELETE FROM grades WHERE submission_id = ?", submissionId);
+        jdbcTemplate.update("DELETE FROM notifications WHERE user_id IN (?, ?)", studentId, teacherId);
+
+        mockMvc.perform(post("/utemp/submissions/{id}/grades", submissionId)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(data.login(TEACHER)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"submission": {"id": %d}, "grade": 9.5, "comments": "Well done", "state": "FINALIZED"}
+                                """.formatted(submissionId)))
+                .andExpect(status().isCreated());
+
+        assertThat(jdbcTemplate.queryForList("SELECT message FROM notifications WHERE user_id = ?", String.class, studentId))
+                .singleElement().asString().contains("Quiz", "9.5");
+        // The teacher is the one who graded; they used to get the notification instead of the student
+        assertThat(data.count("SELECT COUNT(*) FROM notifications WHERE user_id = ?", teacherId)).isZero();
     }
 
     @Test
