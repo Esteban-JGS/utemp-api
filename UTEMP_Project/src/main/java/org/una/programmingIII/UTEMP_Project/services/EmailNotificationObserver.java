@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -93,9 +94,9 @@ public class EmailNotificationObserver implements Observer {
             helper.setText(body, true);
             mailSender.send(message);
             logger.info("Email sent successfully to {}", to);
-        } catch (MessagingException e) {
-            logger.error("Failed to send email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send email to " + to, e);
+        } catch (MessagingException | MailException e) {
+            // Email is best effort (SMTP is optional for local runs): the action that triggered it already succeeded
+            logger.warn("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
 
