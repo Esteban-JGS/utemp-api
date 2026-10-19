@@ -159,8 +159,8 @@ Notifications are stored in the database and read through `/notifications/user/{
   when their submission is graded, by the teacher or by the simulated review;
 - the teacher is notified when a student hands in work.
 
-Email is only sent about enrollments (`POST /users/{userId}/enrollments/{courseId}` and `PUT /enrollments/{id}`),
-to the student and the teacher, using the Observer pattern on the async executor. It needs the SMTP settings in
+Email is only sent when a student is enrolled (`POST /users/{userId}/enrollments/{courseId}`), to the student and
+the teacher, using the Observer pattern on the async executor. It needs the SMTP settings in
 `.env`; without them each failed email is logged as a single warning.
 
 ## Tech stack

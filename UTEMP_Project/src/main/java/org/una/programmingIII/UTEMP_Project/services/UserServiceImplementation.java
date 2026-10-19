@@ -305,7 +305,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
             enrollmentRepository.save(enrollment);
             logger.info("Enrollment saved successfully for User: {} in Course: {}", user.getName(), course.getName());
 
-            notifyUserAndProfessor(user, course);
+            notifyUserAndProfessor(user.getName(), user.getEmail(), course.getName(), course.getTeacher().getEmail());
             logger.info("Notification sent to User: {} and Course Professor.", user.getName());
             return null;
         }, "Error enrolling user to course");
@@ -427,34 +427,18 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error permanently deleting user");
     }
 
+    // Takes plain values, never entities: it may run on another thread, where the request's Hibernate session
+    // must not be used
     @Override
     @Async("taskExecutor")
-    public CompletableFuture<Void> notifyUserAndProfessor(User user, Course course) {
-        logger.info("Thread [{}] - Starting notification process for userId: {} and courseId: {}",
-                Thread.currentThread().getName(), user.getId(), course.getId());
+    public CompletableFuture<Void> notifyUserAndProfessor(String studentName, String studentEmail, String courseName,
+                                                          String teacherEmail) {
+        String userMessage = "The user " + studentName + " has been enrolled in the course " + courseName;
+        String professorMessage = "The student " + studentName + " has been enrolled in your course " + courseName;
 
-        String userMessage = "The user " + user.getName() + " has been enrolled in the course " + course.getName();
-        String professorMessage = "The student " + user.getName() + " has been enrolled in your course " + course.getName();
-
-        logger.debug("User message created: {}", userMessage);
-        logger.debug("Professor message created: {}", professorMessage);
-
-        logger.info("Thread [{}] - Sending notification to user: {}", Thread.currentThread().getName(), user.getEmail());
-        notifyObservers("USER_ENROLLED", userMessage, user.getEmail());
-        logger.info("Thread [{}] - Notification sent to user: {}", Thread.currentThread().getName(), user.getEmail());
-
-        logger.info("Thread [{}] - Sending notification to professor: {}", Thread.currentThread().getName(), course.getTeacher().getEmail());
-        notifyObservers("PROFESSOR_NOTIFICATION", professorMessage, course.getTeacher().getEmail());
-        logger.info("Thread [{}] - Notification sent to professor: {}", Thread.currentThread().getName(), course.getTeacher().getEmail());
-
-        // Uncomment if using notification service
-        // logger.info("Sending additional notifications using notificationService...");
-        // notificationService.sendNotificationToUser(user.getId(), userMessage);
-        // notificationService.sendNotificationToUser(course.getTeacher().getId(), professorMessage);
-        // logger.info("Notifications sent using notificationService.");
-
-        logger.info("Thread [{}] - Notification process completed for userId: {} and courseId: {}",
-                Thread.currentThread().getName(), user.getId(), course.getId());
+        notifyObservers("USER_ENROLLED", userMessage, studentEmail);
+        notifyObservers("PROFESSOR_NOTIFICATION", professorMessage, teacherEmail);
+        logger.info("Enrollment notifications sent to {} and {}", studentEmail, teacherEmail);
 
         return CompletableFuture.completedFuture(null);
     }

@@ -41,6 +41,7 @@ class CourseworkIntegrationTest {
     private static final String STUDENT_TO_ENROLL = "300000083";
     private static final String STUDENT_TO_GRADE = "300000084";
     private static final String STUDENT_TO_REVIEW = "300000085";
+    private static final String STUDENT_TO_UPDATE = "300000086";
 
     @Autowired
     private MockMvc mockMvc;
@@ -143,6 +144,29 @@ class CourseworkIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
                 .andExpect(status().isNotFound());
         assertThat(data.count("SELECT COUNT(*) FROM enrollments WHERE student_id = ?", studentId)).isOne();
+    }
+
+    @Test
+    void updatingAnEnrollmentSucceedsEveryTime() throws Exception {
+        Long studentId = data.user(STUDENT_TO_UPDATE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        data.enroll(studentId, courseId);
+        Long enrollmentId = jdbcTemplate.queryForObject("SELECT id FROM enrollments WHERE course_id = ? AND student_id = ?",
+                Long.class, courseId, studentId);
+        String admin = data.login(TestData.ADMIN);
+
+        // The update used to hand its entities to an @Async method, which read them from another thread while the
+        // request was still using the same Hibernate session; repeating it makes that race show up
+        for (int attempt = 1; attempt <= 20; attempt++) {
+            String state = attempt % 2 == 0 ? "ENROLLED" : "COMPLETED";
+            mockMvc.perform(put("/utemp/enrollments/{id}", enrollmentId)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"course": {"id": %d}, "student": {"id": %d}, "state": "%s"}
+                                    """.formatted(courseId, studentId, state)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.state").value(state));
+        }
     }
 
     @Test
