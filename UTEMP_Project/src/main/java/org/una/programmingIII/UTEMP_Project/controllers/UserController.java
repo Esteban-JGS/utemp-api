@@ -489,40 +489,6 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Remove Course from Teacher",
-            description = "Removes a course assigned to a specific teacher."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "Course successfully removed from the teacher."
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Course or teacher not found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Course or teacher not found.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Error removing the course.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Error removing course.\"}")
-                    )
-            )
-    })
-    @DeleteMapping("/{userId}/courses/{courseId}")
-    @PreAuthorize("hasAuthority('REMOVE_TEACHER_COURSE')")
-    public ResponseEntity<Void> removeCourseFromTeacher(@PathVariable Long userId,
-                                                        @PathVariable Long courseId) {
-        userService.removeCourseFromTeacher(userId, courseId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(
             summary = "Get Enrollments by User ID",
             description = "Retrieves all enrollments for a specific user."
     )

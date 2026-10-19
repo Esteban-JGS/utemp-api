@@ -121,10 +121,7 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
     public CourseDTO createCourse(@Valid CourseDTO courseDTO) {
         try {
             Course course = courseMapper.convertToEntity(courseDTO);
-            Long teacherId = courseDTO.getTeacher() != null && courseDTO.getTeacher().getId() != null
-                    ? courseDTO.getTeacher().getId()
-                    : courseDTO.getUserTeacherUniqueID();
-            course.setTeacher(getEntityById(teacherId, userRepository, "Teacher"));
+            course.setTeacher(getEntityById(teacherId(courseDTO), userRepository, "Teacher"));
             course.setDepartment(getEntityById(courseDTO.getDepartment().getId(), departmentRepository, "Department"));
             return executeWithLogging(() -> courseMapper.convertToDTO(courseRepository.save(course)),
                     "Error creating course");
@@ -304,7 +301,18 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         existingCourse.setName(courseDTO.getName());
         existingCourse.setDescription(courseDTO.getDescription());
         existingCourse.setState(courseDTO.getState());
+        // The teacher is changed here; a course always needs one, so it is replaced, never removed
+        Long teacherId = teacherId(courseDTO);
+        if (teacherId != null) {
+            existingCourse.setTeacher(getEntityById(teacherId, userRepository, "Teacher"));
+        }
         existingCourse.setLastUpdate(LocalDateTime.now());
+    }
+
+    private static Long teacherId(CourseDTO courseDTO) {
+        return courseDTO.getTeacher() != null && courseDTO.getTeacher().getId() != null
+                ? courseDTO.getTeacher().getId()
+                : courseDTO.getUserTeacherUniqueID();
     }
 
     private <T> T executeWithLogging(Supplier<T> action, String errorMessage) {

@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -14,8 +15,10 @@ import org.una.programmingIII.UTEMP_Project.TestcontainersConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
@@ -30,6 +33,7 @@ import static org.una.programmingIII.UTEMP_Project.controllers.TestData.bearer;
 class CourseworkIntegrationTest {
 
     private static final String TEACHER = "200000081";
+    private static final String NEW_TEACHER = "200000082";
     private static final String STUDENT_WITHOUT_FILE = "300000081";
     private static final String STUDENT_WITH_FILES = "300000082";
     private static final String STUDENT_TO_ENROLL = "300000083";
@@ -89,6 +93,31 @@ class CourseworkIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
                 .andExpect(status().isNotFound());
         assertThat(data.count("SELECT COUNT(*) FROM enrollments WHERE student_id = ?", studentId)).isOne();
+    }
+
+    @Test
+    void theTeacherOfACourseIsChangedByUpdatingTheCourse() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long courseToHandOver = data.course("Test Handover", teacherId);
+        Long newTeacherId = data.user(NEW_TEACHER, "TEACHER", TestData.TEACHER_PERMISSIONS);
+        String admin = data.login(TestData.ADMIN);
+
+        // The old endpoint left the course without a teacher, which the schema does not allow
+        mockMvc.perform(delete("/utemp/users/{userId}/courses/{courseId}", teacherId, courseToHandOver)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().is4xxClientError());
+
+        mockMvc.perform(put("/utemp/courses/{id}", courseToHandOver)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Test Handover", "description": "Test course", "state": "ACTIVE",
+                                 "teacher": {"id": %d}}
+                                """.formatted(newTeacherId)))
+                .andExpect(status().isOk());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT teacher_id FROM courses WHERE id = ?", Long.class, courseToHandOver))
+                .isEqualTo(newTeacherId);
     }
 
     private Long insertFile(Long submissionId, Long studentId) {
