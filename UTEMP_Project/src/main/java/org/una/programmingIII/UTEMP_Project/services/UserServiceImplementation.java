@@ -145,25 +145,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<UserDTO> getUserByRole(UserRole role) {
-        try {
-            return executeWithLogging(() -> {
-                User user = userRepository.findByRole(role.toString());
-                return Optional.ofNullable(user).map(userMapper::convertToDTO);
-            }, "Error fetching user by role");
-        } catch (ResourceNotFoundException e) {
-            logger.error("User not found with role {}: {}", role, e.getMessage());
-            throw e;
-        } catch (DomainException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Unexpected error occurred while fetching user by role {}: {}", role, e.getMessage());
-            throw new InvalidDataException("Error fetching user by role");
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<UserDTO> getAllUsers(Pageable pageable) {
         try {
             return executeWithLogging(() -> {
@@ -273,22 +254,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     }
 
     @Override
-    @Transactional
-    public void removeCourseFromTeacher(Long userId, Long courseId) {
-        User user = getEntityById(userId, userRepository, "User");
-        Course course = getEntityById(courseId, courseRepository, "Course");
-
-        if (!user.getCoursesTeaching().contains(course)) {
-            throw new InvalidDataException("The course is not assigned to this teacher.");
-        }
-
-        user.getCoursesTeaching().remove(course);
-        course.setTeacher(null);
-
-        userRepository.save(user);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable) {
         try {
@@ -307,9 +272,10 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }
     }
 
-    @Async("taskExecutor")
+    // Synchronous so the caller learns whether the enrollment happened; only the emails are sent in the background
+    @Override
     @Transactional
-    public CompletableFuture<Void> enrollUserToCourse(Long userId, Long courseId) {
+    public void enrollUserToCourse(Long userId, Long courseId) {
         logger.info("Starting enrollment process for userId: {} and courseId: {}", userId, courseId);
 
         User user = getEntityById(userId, userRepository, "User");
@@ -323,7 +289,7 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
 
         if (alreadyEnrolled) {
             logger.warn("User {} is already enrolled in course {}", user.getName(), course.getName());
-            throw new InvalidDataException("User is already enrolled in this course.");
+            throw new ResourceAlreadyExistsException("Enrollment", "user " + userId + " in course " + courseId);
         }
 
         logger.info("Creating new enrollment for User: {} in Course: {}", user.getName(), course.getName());
@@ -342,7 +308,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error enrolling user to course");
 
         logger.info("Enrollment process completed for userId: {} and courseId: {}", userId, courseId);
-        return CompletableFuture.completedFuture(null);
     }
 
 

@@ -25,8 +25,6 @@ public interface UserService {
 
     Optional<UserDTO> getUserByIdentificationNumber(String identificationNumber);
 
-    Optional<UserDTO> getUserByRole(UserRole role);
-
     Optional<UserDTO> updateUser(Long id, @Valid UserDTO userDTO);
 
     boolean deleteUser(Long id);
@@ -35,11 +33,9 @@ public interface UserService {
 
     void assignCourseToTeacher(Long userId, Long courseId);
 
-    void removeCourseFromTeacher(Long userId, Long courseId);
-
     Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable);
 
-    CompletableFuture<Void> enrollUserToCourse(Long userId, Long courseId);
+    void enrollUserToCourse(Long userId, Long courseId);
 
     void unrollUserFromCourse(Long userId, Long courseId);
 

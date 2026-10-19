@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.unit.DataSize;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.FileServiceException;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
@@ -40,17 +41,20 @@ public class FileServiceImplementation implements FileService {
     private final SubmissionRepository submissionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final Path basePath;
+    private final DataSize maxFileSize;
 
     public FileServiceImplementation(FileMetadatumRepository fileMetadatumRepository,
                                      SubmissionRepository submissionRepository,
                                      UserRepository userRepository,
                                      ApplicationEventPublisher eventPublisher,
-                                     @Value("${file.storage.base-path}") String basePath) {
+                                     @Value("${file.storage.base-path}") String basePath,
+                                     @Value("${file.storage.max-file-size}") DataSize maxFileSize) {
         this.fileMetadatumRepository = fileMetadatumRepository;
         this.userRepository = userRepository;
         this.submissionRepository = submissionRepository;
         this.eventPublisher = eventPublisher;
         this.basePath = Paths.get(basePath).toAbsolutePath().normalize();
+        this.maxFileSize = maxFileSize;
     }
 
     @PostConstruct
@@ -66,6 +70,10 @@ public class FileServiceImplementation implements FileService {
         Long submissionId = fileDTO.getSubmission() != null ? fileDTO.getSubmission().getId() : null;
         if (studentId == null || submissionId == null) {
             throw new InvalidDataException("student and submission are required");
+        }
+        long fileSize = fileDTO.getFileSize() != null ? fileDTO.getFileSize() : 0L;
+        if (fileSize <= 0 || fileSize > maxFileSize.toBytes()) {
+            throw new InvalidDataException("file size must be between 1 byte and " + maxFileSize);
         }
         if (!isAdmin(requester) && !studentId.equals(requester.getId())) {
             throw new AccessDeniedException("Users can only upload files as themselves");
@@ -84,7 +92,7 @@ public class FileServiceImplementation implements FileService {
                 .student(student)
                 .fileName(sanitizeFileName(fileDTO.getFileName()))
                 .fileType(fileDTO.getFileType() != null ? fileDTO.getFileType() : UNKNOWN)
-                .fileSize(fileDTO.getFileSize() != null ? fileDTO.getFileSize() : 0L)
+                .fileSize(fileSize)
                 // The name on disk is generated here; the user-supplied name is only kept as metadata
                 .storagePath(UUID.randomUUID().toString())
                 .build();
@@ -147,6 +155,10 @@ public class FileServiceImplementation implements FileService {
         }
 
         Path path = resolveStoragePath(metadata);
+        // Chunks must arrive in order: each one starts where the stored part ends, so none is skipped or written twice
+        if (offset != storedBytes(path)) {
+            throw new InvalidDataException("chunk " + chunkIndex + " is out of order");
+        }
         try (RandomAccessFile raf = new RandomAccessFile(path.toFile(), "rw")) {
             raf.seek(offset);
             raf.write(chunk);
@@ -158,6 +170,14 @@ public class FileServiceImplementation implements FileService {
 
         if (isLastChunk) {
             finalizeUpload(metadata);
+        }
+    }
+
+    private long storedBytes(Path path) {
+        try {
+            return Files.exists(path) ? Files.size(path) : 0L;
+        } catch (IOException e) {
+            throw new FileServiceException("Could not read the stored part of " + path.getFileName());
         }
     }
 

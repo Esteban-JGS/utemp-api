@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.util.unit.DataSize;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.*;
 class FileServiceImplementationTest {
 
     private static final long FILE_ID = 10L;
+    private static final DataSize MAX_FILE_SIZE = DataSize.ofKilobytes(1);
 
     @Mock
     private FileMetadatumRepository fileMetadatumRepository;
@@ -56,7 +58,8 @@ class FileServiceImplementationTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        fileService = new FileServiceImplementation(fileMetadatumRepository, submissionRepository, userRepository, eventPublisher, storageDir.toString());
+        fileService = new FileServiceImplementation(fileMetadatumRepository, submissionRepository, userRepository, eventPublisher, storageDir.toString(),
+                MAX_FILE_SIZE);
         fileService.initializeStoragePath();
         owner = user(1L, UserRole.STUDENT);
         otherStudent = user(2L, UserRole.STUDENT);
@@ -82,6 +85,18 @@ class FileServiceImplementationTest {
     void studentCannotCreateAFileOnBehalfOfAnotherStudent() {
         assertThrows(AccessDeniedException.class,
                 () -> fileService.createNewFileMetadata(uploadRequest(owner.getId(), "notes.txt"), otherStudent));
+        verify(fileMetadatumRepository, never()).save(any());
+    }
+
+    @Test
+    void filesLargerThanTheLimitOrEmptyAreRejected() {
+        FileMetadatumDTO tooLarge = uploadRequest(owner.getId(), "big.bin");
+        tooLarge.setFileSize(MAX_FILE_SIZE.toBytes() + 1);
+        FileMetadatumDTO empty = uploadRequest(owner.getId(), "empty.txt");
+        empty.setFileSize(0L);
+
+        assertThrows(InvalidDataException.class, () -> fileService.createNewFileMetadata(tooLarge, owner));
+        assertThrows(InvalidDataException.class, () -> fileService.createNewFileMetadata(empty, owner));
         verify(fileMetadatumRepository, never()).save(any());
     }
 
@@ -139,14 +154,39 @@ class FileServiceImplementationTest {
         when(fileMetadatumRepository.findById(FILE_ID)).thenReturn(Optional.of(metadata));
         when(fileMetadatumRepository.isOwner(FILE_ID, owner.getId())).thenReturn(true);
 
-        // Sent out of order on purpose: the offset depends on the index, not on arrival order
-        fileService.receiveFileChunk(chunk(2, 3, "ij"), owner);
         fileService.receiveFileChunk(chunk(0, 3, "abcd"), owner);
         fileService.receiveFileChunk(chunk(1, 3, "efgh"), owner);
+        fileService.receiveFileChunk(chunk(2, 3, "ij"), owner);
 
         assertEquals("abcdefghij", Files.readString(storageDir.resolve(metadata.getStoragePath())));
         // Receiving the last chunk completes the upload and triggers the automatic review exactly once
         verify(eventPublisher, times(1)).publishEvent(any(SubmissionFileUploadedEvent.class));
+    }
+
+    @Test
+    void chunkThatSkipsAheadIsRejected() throws IOException {
+        FileMetadatum metadata = storedFile("abcdefghij");
+        when(fileMetadatumRepository.findById(FILE_ID)).thenReturn(Optional.of(metadata));
+        when(fileMetadatumRepository.isOwner(FILE_ID, owner.getId())).thenReturn(true);
+
+        fileService.receiveFileChunk(chunk(0, 3, "abcd"), owner);
+
+        assertThrows(InvalidDataException.class, () -> fileService.receiveFileChunk(chunk(2, 3, "ij"), owner));
+        assertThrows(InvalidDataException.class, () -> fileService.receiveFileChunk(chunk(0, 3, "abcd"), owner));
+        assertEquals("abcd", Files.readString(storageDir.resolve(metadata.getStoragePath())));
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void lastChunkAloneDoesNotCompleteTheUpload() {
+        FileMetadatum metadata = storedFile("abcdefghij");
+        when(fileMetadatumRepository.findById(FILE_ID)).thenReturn(Optional.of(metadata));
+        when(fileMetadatumRepository.isOwner(FILE_ID, owner.getId())).thenReturn(true);
+
+        assertThrows(InvalidDataException.class, () -> fileService.receiveFileChunk(chunk(2, 3, "ij"), owner));
+
+        assertFalse(Files.exists(storageDir.resolve(metadata.getStoragePath())));
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

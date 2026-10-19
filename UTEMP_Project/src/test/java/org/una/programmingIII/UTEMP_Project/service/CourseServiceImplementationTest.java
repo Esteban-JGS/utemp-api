@@ -136,6 +136,7 @@ public class CourseServiceImplementationTest {
     @Test
     public void testUpdateCourse_Success() {
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(teacher));
         when(courseRepository.save(course)).thenReturn(course);
         when(courseMapper.convertToDTO(any(Course.class))).thenReturn(courseDTO);
 
@@ -143,6 +144,8 @@ public class CourseServiceImplementationTest {
 
         assertTrue(result.isPresent());
         assertEquals("Test Course", result.get().getName());
+        // The teacher in the request replaces the current one
+        assertSame(teacher, course.getTeacher());
         verify(courseRepository, times(1)).save(course);
     }
 

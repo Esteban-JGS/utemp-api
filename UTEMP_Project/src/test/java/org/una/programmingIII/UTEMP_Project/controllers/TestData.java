@@ -89,6 +89,17 @@ class TestData {
         return courseId(name);
     }
 
+    /** Creates an assignment with this title in the course if needed. */
+    Long assignment(Long courseId, String title) {
+        jdbcTemplate.update("""
+                INSERT INTO assignments (title, description, deadline, course_id, state, created_at, last_update)
+                SELECT ?, 'Test assignment', NOW() + INTERVAL '7 days', ?, 'ONGOING', NOW(), NOW()
+                WHERE NOT EXISTS (SELECT 1 FROM assignments WHERE course_id = ? AND title = ?)
+                """, title, courseId, courseId, title);
+        return jdbcTemplate.queryForObject("SELECT id FROM assignments WHERE course_id = ? AND title = ?",
+                Long.class, courseId, title);
+    }
+
     Long assignmentOf(Long courseId) {
         return jdbcTemplate.queryForObject("SELECT MIN(id) FROM assignments WHERE course_id = ?", Long.class, courseId);
     }
