@@ -20,6 +20,8 @@ import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException
 import org.una.programmingIII.UTEMP_Project.models.Assignment;
 import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.Enrollment;
+import org.una.programmingIII.UTEMP_Project.models.User;
+import org.una.programmingIII.UTEMP_Project.models.UserRole;
 import org.una.programmingIII.UTEMP_Project.observers.Subject;
 import org.una.programmingIII.UTEMP_Project.repositories.AssignmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
@@ -121,7 +123,7 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
     public CourseDTO createCourse(@Valid CourseDTO courseDTO) {
         try {
             Course course = courseMapper.convertToEntity(courseDTO);
-            course.setTeacher(getEntityById(teacherId(courseDTO), userRepository, "Teacher"));
+            course.setTeacher(teacher(teacherId(courseDTO)));
             course.setDepartment(getEntityById(courseDTO.getDepartment().getId(), departmentRepository, "Department"));
             return executeWithLogging(() -> courseMapper.convertToDTO(courseRepository.save(course)),
                     "Error creating course");
@@ -304,9 +306,17 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         // The teacher is changed here; a course always needs one, so it is replaced, never removed
         Long teacherId = teacherId(courseDTO);
         if (teacherId != null) {
-            existingCourse.setTeacher(getEntityById(teacherId, userRepository, "Teacher"));
+            existingCourse.setTeacher(teacher(teacherId));
         }
         existingCourse.setLastUpdate(LocalDateTime.now());
+    }
+
+    private User teacher(Long teacherId) {
+        User teacher = getEntityById(teacherId, userRepository, "Teacher");
+        if (teacher.getRole() != UserRole.TEACHER) {
+            throw new InvalidDataException("User " + teacherId + " is not a teacher");
+        }
+        return teacher;
     }
 
     private static Long teacherId(CourseDTO courseDTO) {

@@ -17,6 +17,7 @@ import org.una.programmingIII.UTEMP_Project.models.Course;
 import org.una.programmingIII.UTEMP_Project.models.CourseState;
 import org.una.programmingIII.UTEMP_Project.models.Department;
 import org.una.programmingIII.UTEMP_Project.models.User;
+import org.una.programmingIII.UTEMP_Project.models.UserRole;
 import org.una.programmingIII.UTEMP_Project.repositories.CourseRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.DepartmentRepository;
 import org.una.programmingIII.UTEMP_Project.repositories.UserRepository;
@@ -56,6 +57,7 @@ public class CourseServiceImplementationTest {
     public void setUp() {
         teacher = new User();
         teacher.setId(2L);
+        teacher.setRole(UserRole.TEACHER);
 
         department = new Department();
         department.setId(3L);
@@ -131,6 +133,16 @@ public class CourseServiceImplementationTest {
         when(courseRepository.save(any(Course.class))).thenThrow(new InvalidDataException("Invalid course data"));
 
         assertThrows(InvalidDataException.class, () -> courseService.createCourse(courseDTO));
+    }
+
+    @Test
+    public void testCreateCourse_TeacherWithoutTeacherRole() {
+        teacher.setRole(UserRole.STUDENT);
+        when(courseMapper.convertToEntity(courseDTO)).thenReturn(course);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(teacher));
+
+        assertThrows(InvalidDataException.class, () -> courseService.createCourse(courseDTO));
+        verify(courseRepository, never()).save(any(Course.class));
     }
 
     @Test

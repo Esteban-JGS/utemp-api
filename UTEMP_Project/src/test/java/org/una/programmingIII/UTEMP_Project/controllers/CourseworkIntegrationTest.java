@@ -171,6 +171,37 @@ class CourseworkIntegrationTest {
     }
 
     @Test
+    void onlyATeacherCanTeachACourse() throws Exception {
+        Long teacherId = data.userId(TEACHER);
+        Long studentId = data.user(STUDENT_WITHOUT_FILE, "STUDENT", TestData.STUDENT_PERMISSIONS);
+        Long departmentId = jdbcTemplate.queryForObject("SELECT MIN(id) FROM departments", Long.class);
+        String admin = data.login(TestData.ADMIN);
+        String newCourse = """
+                {"name": "Test Taught By", "description": "Test course", "state": "ACTIVE",
+                 "teacher": {"id": %d}, "department": {"id": %d}}
+                """;
+
+        mockMvc.perform(post("/utemp/courses").header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(newCourse.formatted(studentId, departmentId)))
+                .andExpect(status().isBadRequest());
+        assertThat(data.count("SELECT COUNT(*) FROM courses WHERE name = 'Test Taught By'")).isZero();
+
+        mockMvc.perform(put("/utemp/courses/{id}", courseId).header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Test Coursework", "description": "Test course", "state": "ACTIVE",
+                                 "teacher": {"id": %d}}
+                                """.formatted(studentId)))
+                .andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("SELECT teacher_id FROM courses WHERE id = ?", Long.class, courseId))
+                .isEqualTo(teacherId);
+
+        mockMvc.perform(post("/utemp/courses").header(HttpHeaders.AUTHORIZATION, bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON).content(newCourse.formatted(teacherId, departmentId)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     void usersAreListedByRoleOnlyThroughThePaginatedEndpoint() throws Exception {
         String admin = data.login(TestData.ADMIN);
 
