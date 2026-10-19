@@ -102,7 +102,7 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
 
         try {
             Submission submission = submissionMapper.convertToEntity(submissionDTO);
-            submission.setFileName("desconocido");
+            submission.setFileName("pending-upload");
             User user = getEntityById(submissionDTO.getStudent().getId(), userRepository, "User");
 
             submission.setAssignment(getEntityById(submissionDTO.getAssignment().getId(), assignmentRepository, "Assignment"));

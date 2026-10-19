@@ -35,7 +35,7 @@ import java.util.UUID;
 public class FileServiceImplementation implements FileService {
 
     private static final Logger logger = LoggerFactory.getLogger(FileServiceImplementation.class);
-    private static final String UNKNOWN = "desconocido";
+    private static final String UNKNOWN = "unknown";
 
     private final FileMetadatumRepository fileMetadatumRepository;
     private final UserRepository userRepository;
@@ -61,7 +61,7 @@ public class FileServiceImplementation implements FileService {
     @PostConstruct
     void initializeStoragePath() throws IOException {
         Files.createDirectories(basePath);
-        logger.info("Ruta de almacenamiento de archivos: {}", basePath);
+        logger.info("File storage path: {}", basePath);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class FileServiceImplementation implements FileService {
         }
 
         User student = userRepository.findById(studentId)
-                .orElseThrow(() -> new UserNotFoundException("Usuario con ID " + studentId + " no encontrado"));
+                .orElseThrow(() -> new UserNotFoundException("User with ID " + studentId + " not found"));
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Submission", submissionId));
         if (!isAdmin(requester) && !isStudentOf(submission, requester)) {
@@ -98,7 +98,7 @@ public class FileServiceImplementation implements FileService {
                 .storagePath(UUID.randomUUID().toString())
                 .build();
 
-        logger.info("Metadatos creados para el archivo {}", newFile.getStoragePath());
+        logger.info("Metadata created for file {}", newFile.getStoragePath());
         return metadataToDto(fileMetadatumRepository.save(newFile));
     }
 
@@ -114,13 +114,13 @@ public class FileServiceImplementation implements FileService {
         FileMetadatum metadata = findReadableFile(id, requester);
         Path path = resolveStoragePath(metadata);
         if (!Files.exists(path)) {
-            logger.error("El archivo con ID {} no existe en disco", id);
+            logger.error("File with ID {} does not exist on disk", id);
             throw new ResourceNotFoundException("File", id);
         }
         try {
             return new StoredFile(metadata.getFileName(), path, Files.size(path));
         } catch (IOException e) {
-            throw new FileServiceException("No se pudo leer el archivo con ID " + id);
+            throw new FileServiceException("Could not read file with ID " + id);
         }
     }
 
@@ -131,10 +131,10 @@ public class FileServiceImplementation implements FileService {
         try {
             Files.deleteIfExists(resolveStoragePath(metadata));
         } catch (IOException e) {
-            throw new FileServiceException("No se pudo eliminar el archivo con ID " + id);
+            throw new FileServiceException("Could not delete file with ID " + id);
         }
         fileMetadatumRepository.delete(metadata);
-        logger.info("Archivo con ID {} eliminado", id);
+        logger.info("File with ID {} deleted", id);
     }
 
     @Override
@@ -164,10 +164,10 @@ public class FileServiceImplementation implements FileService {
             raf.seek(offset);
             raf.write(chunk);
         } catch (IOException e) {
-            logger.error("Error al guardar el fragmento {} del archivo {}: {}", chunkIndex, metadata.getId(), e.getMessage());
-            throw new FileServiceException("No se pudo guardar el fragmento " + chunkIndex);
+            logger.error("Error saving chunk {} of file {}: {}", chunkIndex, metadata.getId(), e.getMessage());
+            throw new FileServiceException("Could not save chunk " + chunkIndex);
         }
-        logger.debug("Fragmento {} de {} guardado para el archivo {}", chunkIndex + 1, totalChunks, metadata.getId());
+        logger.debug("Chunk {} of {} saved for file {}", chunkIndex + 1, totalChunks, metadata.getId());
 
         if (isLastChunk) {
             finalizeUpload(metadata);
@@ -191,7 +191,7 @@ public class FileServiceImplementation implements FileService {
             // The automatic review listens to this event and runs after this transaction commits
             eventPublisher.publishEvent(new SubmissionFileUploadedEvent(submission.getId()));
         }
-        logger.info("Carga del archivo {} finalizada", metadata.getId());
+        logger.info("Upload of file {} completed", metadata.getId());
     }
 
     private FileMetadatum findReadableFile(Long id, User requester) {

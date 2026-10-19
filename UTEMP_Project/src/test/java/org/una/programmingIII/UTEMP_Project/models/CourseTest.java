@@ -175,7 +175,7 @@ public class CourseTest {
         String extremeDescription = "D".repeat(500); // Probar con la longitud máxima permitida
         course.setDescription(extremeDescription);
         Set<ConstraintViolation<Course>> violations = validator.validate(course);
-        assertTrue(violations.isEmpty(), "La descripción no debería tener violaciones");
+        assertTrue(violations.isEmpty(), "The description should have no violations");
     }
 
     @Test

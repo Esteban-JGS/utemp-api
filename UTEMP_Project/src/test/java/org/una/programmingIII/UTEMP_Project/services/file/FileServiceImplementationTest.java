@@ -234,8 +234,8 @@ class FileServiceImplementationTest {
         assertEquals("notes.txt", FileServiceImplementation.sanitizeFileName("notes.txt"));
         assertEquals("passwd", FileServiceImplementation.sanitizeFileName("../../etc/passwd"));
         assertEquals("evil.exe", FileServiceImplementation.sanitizeFileName("..\\..\\evil.exe"));
-        assertEquals("desconocido", FileServiceImplementation.sanitizeFileName(".."));
-        assertEquals("desconocido", FileServiceImplementation.sanitizeFileName(null));
+        assertEquals("unknown", FileServiceImplementation.sanitizeFileName(".."));
+        assertEquals("unknown", FileServiceImplementation.sanitizeFileName(null));
     }
 
     private static User user(Long id, UserRole role) {

@@ -12,7 +12,7 @@ class ApiResponseTest {
 
         assertNull(response.getData(), "El campo 'data' debe ser nulo por defecto");
         assertEquals(0, response.getStatusCode(), "El campo 'statusCode' debe ser 0 por defecto");
-        assertEquals("", response.getMessage(), "El campo 'message' debe ser una cadena vacía por defecto");
+        assertEquals("", response.getMessage(), "The 'message' field should be empty by default");
     }
 
     @Test
@@ -20,9 +20,9 @@ class ApiResponseTest {
         String testData = "Test data";
         ApiResponse<String> response = new ApiResponse<>(testData);
 
-        assertEquals(testData, response.getData(), "El campo 'data' debe contener los datos proporcionados");
+        assertEquals(testData, response.getData(), "The 'data' field should hold the given data");
         assertEquals(200, response.getStatusCode(), "El campo 'statusCode' debe ser 200 por defecto");
-        assertEquals("", response.getMessage(), "El campo 'message' debe ser una cadena vacía por defecto");
+        assertEquals("", response.getMessage(), "The 'message' field should be empty by default");
     }
 
     @Test
@@ -53,6 +53,6 @@ class ApiResponseTest {
         ApiResponse<String> response = new ApiResponse<>(testData);
 
         String expectedString = "ApiResponse(data=Test data, statusCode=200, message=)";
-        assertEquals(expectedString, response.toString(), "El método toString debe devolver la representación correcta del objeto");
+        assertEquals(expectedString, response.toString(), "toString should describe the object");
     }
 }

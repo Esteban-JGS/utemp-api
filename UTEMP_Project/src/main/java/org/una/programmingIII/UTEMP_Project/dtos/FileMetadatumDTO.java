@@ -34,7 +34,7 @@ public class FileMetadatumDTO {
     private String fileName;
 
     @NotNull(message = "File size must not be null")
-    @Min(value = 1, message = "El tamaño del archivo debe ser mayor que 0.")
+    @Min(value = 1, message = "File size must be greater than 0")
     private Long fileSize;
 
     @Size(max = 100, message = "File type must be at most 100 characters long")
