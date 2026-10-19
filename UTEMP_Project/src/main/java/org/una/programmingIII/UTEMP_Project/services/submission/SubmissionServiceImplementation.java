@@ -102,8 +102,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
     public SubmissionDTO createSubmission(@Valid SubmissionDTO submissionDTO) {
 
         try {
-            // Convierte el DTO a entidad
-//            System.out.println(submissionDTO.toString());
             Submission submission = submissionMapper.convertToEntity(submissionDTO);
             submission.setFileName("desconocido");
             User user = getEntityById(submissionDTO.getStudent().getId(), userRepository, "User");
@@ -112,24 +110,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
             submission.setStudent(user);
 
             submission = submissionRepository.save(submission);
-
-//            FileMetadatum file = FileMetadatum.builder()
-//                    .submission(submission)
-//                    .student(user)
-//                    .fileName("desconocido")
-//                    .fileType("desconocido")
-//                    .storagePath(fileBasePath)
-//                    .fileSize(0L)
-//                    .build();
-
-
-//            List<FileMetadatum> list = new ArrayList<>();
-
-//            list.add(fileMetadataRepository.save(file));
-
-//            submission.setFileMetadata(list);
-
-            // Guarda la entidad Submission y convierte la entidad a DTO para devolverla
             Submission finalSubmission = submission;
 
             return executeWithLogging(() -> submissionMapper.convertToDTO(finalSubmission), "Error creating submission");

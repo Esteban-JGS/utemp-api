@@ -338,7 +338,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }
     }
 
-    //TODO que es ?
     private <T> T getEntityById(Long id, JpaRepository<T, Long> repository, String entityName) {
         return findEntityById(id, repository)
                 .orElseThrow(() -> new ResourceNotFoundException(entityName, id));

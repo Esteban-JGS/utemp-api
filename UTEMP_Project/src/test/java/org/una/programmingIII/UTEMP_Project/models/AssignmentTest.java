@@ -108,16 +108,6 @@ class AssignmentTest {
         assertTrue(assignment.getSubmissions().isEmpty(), "Submissions list should be empty initially");
     }
 
-//    @Test
-//    void testImmutableCreatedAt() {
-//        assignment.onCreate();
-//        LocalDateTime initialCreatedAt = assignment.getCreatedAt();
-//        assertEquals(initialCreatedAt, assignment.getCreatedAt(), "createdAt should remain unchanged after creation");
-//
-//        assertThrows(UnsupportedOperationException.class, () -> {
-//        }, "createdAt should not be modifiable after creation");
-//    }
-
     @Test
     void testDeadlineInitialization() {
         assignment.onCreate();
