@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
 import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
+import org.una.programmingIII.UTEMP_Project.dtos.UserDTO;
 import org.una.programmingIII.UTEMP_Project.exceptions.FileServiceException;
 import org.una.programmingIII.UTEMP_Project.exceptions.InvalidDataException;
 import org.una.programmingIII.UTEMP_Project.exceptions.ResourceNotFoundException;
@@ -245,8 +246,12 @@ public class FileServiceImplementation implements FileService {
 
     private FileMetadatumDTO metadataToDto(FileMetadatum fileMetadatum) {
         // The storage path is an internal detail and is not exposed to clients
+        // student_id is nullable in the schema, so older rows may not have one
+        User student = fileMetadatum.getStudent();
+        UserDTO studentDTO = student != null ? UserDTO.builder().id(student.getId()).name(student.getName()).build() : null;
         return FileMetadatumDTO.builder()
                 .id(fileMetadatum.getId())
+                .student(studentDTO)
                 .fileName(fileMetadatum.getFileName())
                 .fileType(fileMetadatum.getFileType())
                 .fileSize(fileMetadatum.getFileSize())

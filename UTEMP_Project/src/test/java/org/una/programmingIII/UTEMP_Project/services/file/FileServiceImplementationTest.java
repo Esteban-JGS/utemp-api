@@ -82,6 +82,28 @@ class FileServiceImplementationTest {
     }
 
     @Test
+    void createdFileNamesTheStudentItBelongsTo() {
+        owner.setName("Owner Student");
+        when(userRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
+        when(submissionRepository.findById(5L)).thenReturn(Optional.of(submissionOf(owner)));
+        when(fileMetadatumRepository.save(any(FileMetadatum.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FileMetadatumDTO created = fileService.createNewFileMetadata(uploadRequest(owner.getId(), "notes.txt"), owner);
+
+        assertEquals(owner.getId(), created.getStudent().getId());
+        assertEquals("Owner Student", created.getStudent().getName());
+    }
+
+    @Test
+    void metadataWithoutAStudentCanStillBeRead() {
+        FileMetadatum metadata = storedFile("hello");
+        metadata.setStudent(null);
+        when(fileMetadatumRepository.findById(FILE_ID)).thenReturn(Optional.of(metadata));
+
+        assertNull(fileService.getFileMetadatumById(FILE_ID, admin).getStudent());
+    }
+
+    @Test
     void studentCannotCreateAFileOnBehalfOfAnotherStudent() {
         assertThrows(AccessDeniedException.class,
                 () -> fileService.createNewFileMetadata(uploadRequest(owner.getId(), "notes.txt"), otherStudent));
