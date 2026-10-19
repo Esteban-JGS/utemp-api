@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.una.programmingIII.UTEMP_Project.dtos.FileMetadatumDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
 import org.una.programmingIII.UTEMP_Project.dtos.SubmissionDTO;
 import org.una.programmingIII.UTEMP_Project.models.Grade;
@@ -259,18 +260,17 @@ public class SubmissionController {
             @Parameter(description = "ID of the assignment", required = true) @PathVariable Long assignmentId,
             Pageable pageable) {
         Page<SubmissionDTO> submissionsPage = submissionService.getSubmissionsByAssignmentId(assignmentId, pageable);
-//            System.out.println(submissionsPage.toString());
-//            for (SubmissionDTO dtp : submissionsPage) {
-////                System.out.println(dtp.toString());
-//            }
         PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
         for (SubmissionDTO dtp : submissionsDTOPage.getContent()) {
-//                System.out.println(dtp.toString());
             dtp.setAsignaciontId(assignmentId);
             dtp.setAsignaciontitle(dtp.getAssignment().getTitle());
             dtp.setStudentUniqueName(dtp.getStudent().getName());
             dtp.setStudeId(dtp.getStudent().getId());
-            dtp.setMetadataID(dtp.getFileMetadata().getFirst().getId());
+            // A submission may have no file yet; when it was re-uploaded, the latest file is the one that counts
+            dtp.getFileMetadata().stream()
+                    .map(FileMetadatumDTO::getId)
+                    .max(Long::compare)
+                    .ifPresent(dtp::setMetadataID);
         }
 
         return ResponseEntity.ok(submissionsDTOPage);
