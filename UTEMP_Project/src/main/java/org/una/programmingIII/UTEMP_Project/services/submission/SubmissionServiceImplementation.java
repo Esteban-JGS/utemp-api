@@ -11,7 +11,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.una.programmingIII.UTEMP_Project.dtos.GradeDTO;
@@ -264,7 +263,6 @@ public class SubmissionServiceImplementation extends Subject implements Submissi
         }
     }
 
-    @Async("taskExecutor")
     protected void sendNotificationForGrade(Grade grade, Submission submission) {
         String message = "The grade of the assignment '" +
                 submission.getAssignment().getTitle() + "' was " + grade.getGrade();

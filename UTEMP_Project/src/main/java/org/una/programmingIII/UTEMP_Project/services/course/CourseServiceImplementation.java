@@ -10,7 +10,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
@@ -35,7 +34,6 @@ import org.una.programmingIII.UTEMP_Project.transformers.mappers.GenericMapperFa
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 @Service
@@ -330,7 +328,6 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
         }
     }
 
-    @Async("taskExecutor")
     protected void sendMailToAllStudents(List<Enrollment> enrollments, Assignment assignment) {
         String message = "Assignment '" + assignment.getTitle() +
                 "' was added in the " + assignment.getCourse().getName() + " course";
@@ -345,6 +342,5 @@ public class CourseServiceImplementation extends Subject<EmailNotificationObserv
                 logger.error("Error notifying student {}: {}", enrollment.getStudent().getEmail(), e.getMessage());
             }
         }
-        CompletableFuture.completedFuture(null);
     }
 }
