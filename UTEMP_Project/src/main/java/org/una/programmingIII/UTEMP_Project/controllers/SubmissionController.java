@@ -254,10 +254,6 @@ public class SubmissionController {
         Page<SubmissionDTO> submissionsPage = submissionService.getSubmissionsByAssignmentId(assignmentId, pageable);
         PageDTO<SubmissionDTO> submissionsDTOPage = PageConverter.convertPageToDTO(submissionsPage, submissionDTO -> submissionDTO);
         for (SubmissionDTO dtp : submissionsDTOPage.getContent()) {
-            dtp.setAssignmentId(assignmentId);
-            dtp.setAssignmentTitle(dtp.getAssignment().getTitle());
-            dtp.setStudentName(dtp.getStudent().getName());
-            dtp.setStudentId(dtp.getStudent().getId());
             // A submission may have no file yet; when it was re-uploaded, the latest file is the one that counts
             dtp.getFileMetadata().stream()
                     .map(FileMetadatumDTO::getId)

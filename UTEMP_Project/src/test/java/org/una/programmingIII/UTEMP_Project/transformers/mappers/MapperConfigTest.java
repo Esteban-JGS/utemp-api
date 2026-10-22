@@ -54,6 +54,26 @@ class MapperConfigTest {
     }
 
     @Test
+    void submissionFlatFieldsAreFilledFromTheEntity() {
+        Assignment assignment = new Assignment();
+        assignment.setId(5L);
+        assignment.setTitle("Essay");
+        User student = new User();
+        student.setId(3L);
+        student.setName("Student One");
+        Submission submission = new Submission();
+        submission.setAssignment(assignment);
+        submission.setStudent(student);
+
+        SubmissionDTO dto = modelMapper.map(submission, SubmissionDTO.class);
+
+        assertEquals(5L, dto.getAssignmentId());
+        assertEquals("Essay", dto.getAssignmentTitle());
+        assertEquals(3L, dto.getStudentId());
+        assertEquals("Student One", dto.getStudentName());
+    }
+
+    @Test
     void referencedIdsSurviveTheConversionToEntity() {
         Enrollment enrollment = modelMapper.map(EnrollmentDTO.builder()
                 .course(CourseDTO.builder().id(1L).build())

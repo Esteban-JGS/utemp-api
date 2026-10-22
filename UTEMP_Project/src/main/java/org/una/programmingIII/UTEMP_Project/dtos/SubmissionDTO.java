@@ -34,8 +34,8 @@ public class SubmissionDTO {
     @JsonBackReference("user-submissions")
     private UserDTO student = new UserDTO();
 
-    // assignment and student are not serialized (back references), so the submissions listing of an assignment
-    // fills these flat fields; other responses leave them out
+    // assignment and student are not serialized (back references), so these flat fields tell clients which
+    // assignment and student a submission belongs to. ModelMapper fills them from the entity (see MapperConfig)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long assignmentId;
     @JsonInclude(JsonInclude.Include.NON_NULL)
