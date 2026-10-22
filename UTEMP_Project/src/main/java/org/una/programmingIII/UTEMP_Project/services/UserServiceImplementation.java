@@ -10,7 +10,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.una.programmingIII.UTEMP_Project.dtos.*;
@@ -232,24 +231,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     }
 
     @Override
-    @Transactional
-    public void assignCourseToTeacher(Long userId, Long courseId) {
-        User user = getEntityById(userId, userRepository, "User");
-        Course course = getEntityById(courseId, courseRepository, "Course");
-
-        if (course.getTeacher() != null && !course.getTeacher().equals(user)) {
-            throw new InvalidDataException("Course is already assigned to another teacher with ID: "
-                    + course.getTeacher().getId());
-        }
-
-        if (!user.getCoursesTeaching().contains(course)) {
-            user.getCoursesTeaching().add(course);
-            course.setTeacher(user);
-            userRepository.save(user);
-        }
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable) {
         try {
@@ -400,10 +381,9 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
         }, "Error permanently deleting user");
     }
 
-    // Takes plain values, never entities: it may run on another thread, where the request's Hibernate session
-    // must not be used
+    // Takes plain values, never entities: the email observer sends on the async executor, where the request's
+    // Hibernate session must not be used
     @Override
-    @Async("taskExecutor")
     public CompletableFuture<Void> notifyUserAndProfessor(String studentName, String studentEmail, String courseName,
                                                           String teacherEmail) {
         String userMessage = "The user " + studentName + " has been enrolled in the course " + courseName;

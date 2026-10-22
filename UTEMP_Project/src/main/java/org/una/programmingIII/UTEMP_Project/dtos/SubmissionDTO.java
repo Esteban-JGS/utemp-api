@@ -3,6 +3,7 @@ package org.una.programmingIII.UTEMP_Project.dtos;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -33,10 +34,16 @@ public class SubmissionDTO {
     @JsonBackReference("user-submissions")
     private UserDTO student = new UserDTO();
 
-    private String asignaciontitle;
-    private long asignaciontId;
-    private String studentUniqueName;
-    private Long studeId;
+    // assignment and student are not serialized (back references), so these flat fields tell clients which
+    // assignment and student a submission belongs to. ModelMapper fills them from the entity (see MapperConfig)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long assignmentId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String assignmentTitle;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long studentId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String studentName;
     private Long metadataID;
 
     @NotBlank(message = "File name must not be blank")

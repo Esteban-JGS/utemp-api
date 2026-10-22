@@ -29,8 +29,6 @@ public interface UserService {
 
     Page<CourseDTO> getCoursesTeachingByUserId(Long teacherId, Pageable pageable);
 
-    void assignCourseToTeacher(Long userId, Long courseId);
-
     Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable);
 
     void enrollUserToCourse(Long userId, Long courseId);

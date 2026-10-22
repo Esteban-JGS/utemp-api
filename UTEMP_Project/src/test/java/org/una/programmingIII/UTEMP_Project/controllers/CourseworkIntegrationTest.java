@@ -78,7 +78,12 @@ class CourseworkIntegrationTest {
                 .andExpect(jsonPath("$.content[0].metadataID").value(nullValue()))
                 .andExpect(jsonPath("$.content[1].id").value(withFiles))
                 // Like the automatic review, the listing points to the latest upload
-                .andExpect(jsonPath("$.content[1].metadataID").value(latestFile));
+                .andExpect(jsonPath("$.content[1].metadataID").value(latestFile))
+                // The nested assignment and student are not serialized, so the listing names them in flat fields
+                .andExpect(jsonPath("$.content[1].assignmentId").value(assignmentId))
+                .andExpect(jsonPath("$.content[1].assignmentTitle").value("Essay"))
+                .andExpect(jsonPath("$.content[1].studentId").value(studentWithFiles))
+                .andExpect(jsonPath("$.content[1].studentName").value("Test " + STUDENT_WITH_FILES));
     }
 
     @Test
@@ -203,6 +208,10 @@ class CourseworkIntegrationTest {
         mockMvc.perform(delete("/utemp/users/{userId}/courses/{courseId}", teacherId, courseToHandOver)
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
                 .andExpect(status().is4xxClientError());
+        // Its counterpart only accepted the teacher the course already had, so it is gone too
+        mockMvc.perform(post("/utemp/users/{userId}/courses/{courseId}", newTeacherId, courseToHandOver)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(put("/utemp/courses/{id}", courseToHandOver)
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin))

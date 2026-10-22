@@ -403,48 +403,6 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Assign Course to Teacher",
-            description = "Assigns a specific course to a teacher."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Course successfully assigned to the teacher."
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Course or teacher not found.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Course or teacher not found.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid data provided.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Invalid data provided.\"}")
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Error assigning the course.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"message\": \"Error assigning course.\"}")
-                    )
-            )
-    })
-    @PostMapping("/{userId}/courses/{courseId}")
-    @PreAuthorize("hasAuthority('ADD_TEACHER_COURSES')")
-    public ResponseEntity<Void> assignCourseToTeacher(@PathVariable Long userId,
-                                                      @PathVariable Long courseId) {
-        userService.assignCourseToTeacher(userId, courseId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @Operation(
             summary = "Get Enrollments by User ID",
             description = "Retrieves all enrollments for a specific user."
     )

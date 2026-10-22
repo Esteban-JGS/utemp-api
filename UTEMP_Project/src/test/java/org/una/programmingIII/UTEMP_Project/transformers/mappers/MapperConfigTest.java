@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Uses the application's ModelMapper configuration on every entity/DTO pair the services convert.
@@ -33,6 +34,43 @@ class MapperConfigTest {
         assertEquals(CREATED, userDTO.getCreatedAt());
         assertEquals(CREATED, userDTO.getLastUpdate());
         assertEquals(Instant.parse("2026-12-01T23:59:00Z"), assignmentDTO.getDeadline());
+    }
+
+    @Test
+    void submissionFlatFieldsNeverOverrideTheNestedOnes() {
+        SubmissionDTO dto = SubmissionDTO.builder()
+                .assignment(AssignmentDTO.builder().id(5L).build())
+                .student(UserDTO.builder().id(3L).build())
+                .assignmentId(99L)
+                .studentId(98L)
+                .studentName("Someone else")
+                .build();
+
+        Submission submission = modelMapper.map(dto, Submission.class);
+
+        assertEquals(5L, submission.getAssignment().getId());
+        assertEquals(3L, submission.getStudent().getId());
+        assertNull(submission.getStudent().getName());
+    }
+
+    @Test
+    void submissionFlatFieldsAreFilledFromTheEntity() {
+        Assignment assignment = new Assignment();
+        assignment.setId(5L);
+        assignment.setTitle("Essay");
+        User student = new User();
+        student.setId(3L);
+        student.setName("Student One");
+        Submission submission = new Submission();
+        submission.setAssignment(assignment);
+        submission.setStudent(student);
+
+        SubmissionDTO dto = modelMapper.map(submission, SubmissionDTO.class);
+
+        assertEquals(5L, dto.getAssignmentId());
+        assertEquals("Essay", dto.getAssignmentTitle());
+        assertEquals(3L, dto.getStudentId());
+        assertEquals("Student One", dto.getStudentName());
     }
 
     @Test

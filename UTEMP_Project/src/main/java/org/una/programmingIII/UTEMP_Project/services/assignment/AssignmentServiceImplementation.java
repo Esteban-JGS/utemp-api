@@ -10,7 +10,6 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.una.programmingIII.UTEMP_Project.dtos.AssignmentDTO;
@@ -285,7 +284,6 @@ public class AssignmentServiceImplementation extends Subject<EmailNotificationOb
         }
     }
 
-    @Async("taskExecutor")
     protected void sendNotificationForSubmission(Assignment assignment, Submission submission) {
         String message = "The student " + submission.getStudent().getName() +
                 " added a new submission in the assignment " + assignment.getTitle() +
