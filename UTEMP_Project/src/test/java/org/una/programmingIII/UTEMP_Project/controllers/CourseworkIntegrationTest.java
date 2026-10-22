@@ -78,7 +78,12 @@ class CourseworkIntegrationTest {
                 .andExpect(jsonPath("$.content[0].metadataID").value(nullValue()))
                 .andExpect(jsonPath("$.content[1].id").value(withFiles))
                 // Like the automatic review, the listing points to the latest upload
-                .andExpect(jsonPath("$.content[1].metadataID").value(latestFile));
+                .andExpect(jsonPath("$.content[1].metadataID").value(latestFile))
+                // The nested assignment and student are not serialized, so the listing names them in flat fields
+                .andExpect(jsonPath("$.content[1].assignmentId").value(assignmentId))
+                .andExpect(jsonPath("$.content[1].assignmentTitle").value("Essay"))
+                .andExpect(jsonPath("$.content[1].studentId").value(studentWithFiles))
+                .andExpect(jsonPath("$.content[1].studentName").value("Test " + STUDENT_WITH_FILES));
     }
 
     @Test
