@@ -232,24 +232,6 @@ public class UserServiceImplementation extends Subject<EmailNotificationObserver
     }
 
     @Override
-    @Transactional
-    public void assignCourseToTeacher(Long userId, Long courseId) {
-        User user = getEntityById(userId, userRepository, "User");
-        Course course = getEntityById(courseId, courseRepository, "Course");
-
-        if (course.getTeacher() != null && !course.getTeacher().equals(user)) {
-            throw new InvalidDataException("Course is already assigned to another teacher with ID: "
-                    + course.getTeacher().getId());
-        }
-
-        if (!user.getCoursesTeaching().contains(course)) {
-            user.getCoursesTeaching().add(course);
-            course.setTeacher(user);
-            userRepository.save(user);
-        }
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public Page<EnrollmentDTO> getEnrollmentsByStudentId(Long studentId, Pageable pageable) {
         try {

@@ -208,6 +208,10 @@ class CourseworkIntegrationTest {
         mockMvc.perform(delete("/utemp/users/{userId}/courses/{courseId}", teacherId, courseToHandOver)
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
                 .andExpect(status().is4xxClientError());
+        // Its counterpart only accepted the teacher the course already had, so it is gone too
+        mockMvc.perform(post("/utemp/users/{userId}/courses/{courseId}", newTeacherId, courseToHandOver)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(admin)))
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(put("/utemp/courses/{id}", courseToHandOver)
                         .header(HttpHeaders.AUTHORIZATION, bearer(admin))
